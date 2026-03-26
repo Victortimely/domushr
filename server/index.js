@@ -27,10 +27,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Serve frontend build in production
-const distPath = path.join(__dirname, '..', 'dist');
-app.use(express.static(distPath));
-
 // ===== API Routes =====
 // Public routes (no auth required)
 app.use('/api/auth', authRoutes);
@@ -83,12 +79,9 @@ app.put('/api/settings/:key', authenticateToken, (req, res) => {
   }
 });
 
-// ===== SPA Fallback =====
-// For any non-API route, serve the frontend (Express v5 syntax)
-app.get('/{*path}', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(distPath, 'index.html'));
-  }
+// ===== Root Health Check =====
+app.get('/', (req, res) => {
+  res.json({ status: 'DomusHR Backend API is running', version: '2.0.0' });
 });
 
 // ===== Error Handling =====
