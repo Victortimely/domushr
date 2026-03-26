@@ -206,11 +206,7 @@ export default function LoginPage() {
                                 </button>
                             </div>
 
-                            <div style={{ marginTop: 20, padding: 12, background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                <strong style={{ color: 'var(--text-secondary)' }}>Demo Login:</strong><br />
-                                surveyor1 / survey123<br />
-                                admin / admin123
-                            </div>
+
                         </>
                     ) : (
                         <>

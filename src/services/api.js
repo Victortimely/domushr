@@ -42,7 +42,15 @@ class ApiClient {
       throw new Error('Sesi telah berakhir. Silakan login ulang.');
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      if (!response.ok) {
+        throw new Error('Gagal memproses data dari server. Pastikan VITE_API_URL telah diatur di Vercel menuju URL backend Railway Anda.');
+      }
+      throw new Error('Terjadi kesalahan format response dari server API.');
+    }
 
     if (!response.ok) {
       throw new Error(data.error || `Request failed with status ${response.status}`);
