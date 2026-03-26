@@ -1,10 +1,9 @@
 import { useRef, useEffect, useState } from 'react';
 import SignaturePad from 'signature_pad';
 
-export default function VerificationStep({ data, updateField, onSubmit, onSaveDraft }) {
+export default function VerificationStep({ data, updateField, onSubmit, onSaveDraft, isSaving }) {
     const canvasRef = useRef(null);
     const sigPadRef = useRef(null);
-    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         if (canvasRef.current && !sigPadRef.current) {
@@ -48,13 +47,8 @@ export default function VerificationStep({ data, updateField, onSubmit, onSaveDr
     const allPassed = checks.every((c) => c.pass);
     const passCount = checks.filter((c) => c.pass).length;
 
-    const handleSubmit = async () => {
-        setSubmitting(true);
-        try {
-            await onSubmit();
-        } finally {
-            setSubmitting(false);
-        }
+    const handleSubmit = () => {
+        onSubmit();
     };
 
     return (
@@ -119,17 +113,17 @@ export default function VerificationStep({ data, updateField, onSubmit, onSaveDr
 
             {/* Submit Actions */}
             <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                <button className="btn btn-secondary btn-lg" onClick={onSaveDraft} style={{ flex: 1 }}>
-                    💾 Simpan Draft
+                <button className="btn btn-secondary btn-lg" onClick={onSaveDraft} disabled={isSaving} style={{ flex: 1 }}>
+                    {isSaving ? <span className="spinner" /> : '💾'} Simpan Draft
                 </button>
                 <button
                     className="btn btn-success btn-lg"
                     onClick={handleSubmit}
-                    disabled={!allPassed || submitting}
+                    disabled={!allPassed || isSaving}
                     id="submit-survey-btn"
                     style={{ flex: 1 }}
                 >
-                    {submitting ? <span className="spinner" /> : '📤'} Kirim Survey
+                    {isSaving ? <span className="spinner" /> : '📤'} Kirim Survey
                 </button>
             </div>
 

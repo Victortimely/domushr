@@ -137,8 +137,11 @@ export default function MediaStep({ data, updateField }) {
 
             mediaRecorder.onstop = () => {
                 const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                const url = URL.createObjectURL(blob);
-                updateField('audioBlob', url);
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = () => {
+                    updateField('audioBlob', reader.result);
+                };
                 updateField('audioDuration', recordingTime);
                 stream.getTracks().forEach((t) => t.stop());
                 toast.success('Rekaman tersimpan!');
@@ -170,8 +173,11 @@ export default function MediaStep({ data, updateField }) {
             toast.error('File harus berupa audio (MP3, WAV, WebM, OGG, M4A)');
             return;
         }
-        const url = URL.createObjectURL(file);
-        updateField('audioBlob', url);
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = () => {
+            updateField('audioBlob', reader.result);
+        };
         updateField('audioDuration', 0);
         toast.success(`Audio "${file.name}" berhasil diupload!`);
         logAction('AUDIO_UPLOAD', user.id, user.name, { filename: file.name });

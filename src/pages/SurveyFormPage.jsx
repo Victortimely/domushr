@@ -22,6 +22,7 @@ export default function SurveyFormPage() {
     const toast = useToast();
 
     const [currentStep, setCurrentStep] = useState(0);
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         employee_id: '',
         employee_name: '',
@@ -48,7 +49,14 @@ export default function SurveyFormPage() {
     useEffect(() => {
         if (id && id !== 'new') {
             api.get(`/surveys/${id}`).then((survey) => {
-                if (survey) setFormData(survey);
+                if (survey) {
+                    const mergedData = { ...survey };
+                    // Flatten the nested 'data' object back into root for form editing
+                    if (survey.data && typeof survey.data === 'object') {
+                        Object.assign(mergedData, survey.data);
+                    }
+                    setFormData(mergedData);
+                }
             }).catch(() => {});
         }
     }, [id]);
@@ -63,33 +71,42 @@ export default function SurveyFormPage() {
 
     // Save draft — can be called from ANY step, even if incomplete
     const saveDraft = async () => {
-        const surveyData = {
-            employee_id: formData.employee_id,
-            employee_name: formData.employee_name,
-            employee_nik: formData.employee_nik,
-            employee_dept: formData.employee_dept,
-            status: 'draft',
-            survey_date: formData.created_at,
-            latitude: formData.latitude,
-            longitude: formData.longitude,
-            accuracy: formData.accuracy,
-            data: {
-                employeePosition: formData.employeePosition,
-                photo0: formData.photo0,
-                photo1: formData.photo1,
-                photo2: formData.photo2,
-                interviewSummary: formData.interviewSummary,
-                audioDuration: formData.audioDuration,
-            },
-            signature: formData.signature,
-        };
-        if (formData.id) {
-            await api.put(`/surveys/${formData.id}`, surveyData);
-        } else {
-            const result = await api.post('/surveys', surveyData);
-            updateField('id', result.id);
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            const surveyData = {
+                employee_id: formData.employee_id,
+                employee_name: formData.employee_name,
+                employee_nik: formData.employee_nik,
+                employee_dept: formData.employee_dept,
+                status: 'draft',
+                survey_date: formData.created_at,
+                latitude: formData.latitude,
+                longitude: formData.longitude,
+                accuracy: formData.accuracy,
+                data: {
+                    employeePosition: formData.employeePosition,
+                    photo0: formData.photo0,
+                    photo1: formData.photo1,
+                    photo2: formData.photo2,
+                    audioBlob: formData.audioBlob, // ADDED: Save audio locally
+                    interviewSummary: formData.interviewSummary,
+                    audioDuration: formData.audioDuration,
+                },
+                signature: formData.signature,
+            };
+            if (formData.id) {
+                await api.put(`/surveys/${formData.id}`, surveyData);
+            } else {
+                const result = await api.post('/surveys', surveyData);
+                updateField('id', result.id);
+            }
+            toast.success('Draft tersimpan! Anda bisa melanjutkan nanti.');
+        } catch (e) {
+            toast.error(e.message || 'Gagal menyimpan draft');
+        } finally {
+            setIsSaving(false);
         }
-        toast.success('Draft tersimpan! Anda bisa melanjutkan nanti.');
     };
 
     // Save and exit — saves as draft and navigates back
@@ -99,33 +116,41 @@ export default function SurveyFormPage() {
     };
 
     const submitSurvey = async () => {
-        const surveyData = {
-            employee_id: formData.employee_id,
-            employee_name: formData.employee_name,
-            employee_nik: formData.employee_nik,
-            employee_dept: formData.employee_dept,
-            status: 'saved',
-            survey_date: formData.created_at,
-            latitude: formData.latitude,
-            longitude: formData.longitude,
-            accuracy: formData.accuracy,
-            data: {
-                employeePosition: formData.employeePosition,
-                photo0: formData.photo0,
-                photo1: formData.photo1,
-                photo2: formData.photo2,
-                interviewSummary: formData.interviewSummary,
-                audioDuration: formData.audioDuration,
-            },
-            signature: formData.signature,
-        };
-        if (formData.id) {
-            await api.put(`/surveys/${formData.id}`, surveyData);
-        } else {
-            await api.post('/surveys', surveyData);
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            const surveyData = {
+                employee_id: formData.employee_id,
+                employee_name: formData.employee_name,
+                employee_nik: formData.employee_nik,
+                employee_dept: formData.employee_dept,
+                status: 'saved',
+                survey_date: formData.created_at,
+                latitude: formData.latitude,
+                longitude: formData.longitude,
+                accuracy: formData.accuracy,
+                data: {
+                    employeePosition: formData.employeePosition,
+                    photo0: formData.photo0,
+                    photo1: formData.photo1,
+                    photo2: formData.photo2,
+                    audioBlob: formData.audioBlob, // ADDED: Save audio locally
+                    interviewSummary: formData.interviewSummary,
+                    audioDuration: formData.audioDuration,
+                },
+                signature: formData.signature,
+            };
+            if (formData.id) {
+                await api.put(`/surveys/${formData.id}`, surveyData);
+            } else {
+                await api.post('/surveys', surveyData);
+            }
+            toast.success('Survey berhasil dikirim!');
+            navigate('/history');
+        } catch (e) {
+            setIsSaving(false);
+            toast.error(e.message || 'Gagal mengirim survey');
         }
-        toast.success('Survey berhasil dikirim!');
-        navigate('/history');
     };
 
     const nextStep = () => {
@@ -151,6 +176,7 @@ export default function SurveyFormPage() {
                         updateField={updateField}
                         onSubmit={submitSurvey}
                         onSaveDraft={saveDraft}
+                        isSaving={isSaving}
                     />
                 );
             default:
@@ -196,8 +222,8 @@ export default function SurveyFormPage() {
                         ← Sebelumnya
                     </button>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        <button className="btn btn-ghost" onClick={saveAndExit} title="Simpan dan kembali nanti">
-                            💾 Simpan & Keluar
+                        <button className="btn btn-ghost" onClick={saveAndExit} title="Simpan dan kembali nanti" disabled={isSaving}>
+                            {isSaving ? <span className="spinner" /> : '💾'} Simpan & Keluar
                         </button>
                         <button className="btn btn-primary" onClick={nextStep} id="next-step-btn">
                             Selanjutnya →
