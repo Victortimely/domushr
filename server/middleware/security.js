@@ -9,13 +9,8 @@ export const securityHeaders = helmet({
 });
 
 // CORS — allow frontend origin
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
-  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:4173'];
-
 export const corsMiddleware = cors({
-  origin: allowedOrigins,
-  credentials: true,
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 });
