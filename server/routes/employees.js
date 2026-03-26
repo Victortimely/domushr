@@ -76,8 +76,14 @@ router.delete('/:id', (req, res) => {
   try {
     const emp = db.prepare('SELECT * FROM employees WHERE id = ?').get(req.params.id);
     if (!emp) return res.status(404).json({ error: 'Karyawan tidak ditemukan.' });
-    db.prepare('DELETE FROM employees WHERE id = ?').run(req.params.id);
-    res.json({ message: 'Karyawan berhasil dihapus.' });
+    
+    const tx = db.transaction(() => {
+      db.prepare('DELETE FROM surveys WHERE employee_id = ?').run(req.params.id);
+      db.prepare('DELETE FROM employees WHERE id = ?').run(req.params.id);
+    });
+    tx();
+    
+    res.json({ message: 'Karyawan beserta data survey miliknya berhasil dihapus.' });
   } catch (err) {
     res.status(500).json({ error: 'Server error.' });
   }
