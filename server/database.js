@@ -91,7 +91,6 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT
   );
-  );
 `);
 
 // Migration for adding status to employees if it doesn't exist
