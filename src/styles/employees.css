@@ -1,0 +1,248 @@
+/* ── Employee Data v2 Styling ── */
+.employees-v2 {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #22263a;
+  --surface3: #2a2f47;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --blue: #4f8ef7;
+  --purple: #8b5cf6;
+  --purple-blue: #6477f0;
+  --purple-light: rgba(139,92,246,0.15);
+  --accent: #a78bfa;
+  --text: #e8eaf6;
+  --text-dim: #7b82a8;
+  --text-muted: #4a5080;
+  --green: #34d399;
+  --red: #f87171;
+  --yellow: #fbbf24;
+  --header-bg: linear-gradient(135deg, #2d1f6e 0%, #1e2d6b 50%, #1a2a5e 100%);
+  
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.employees-v2 * { 
+  box-sizing: border-box; 
+}
+
+/* ── TOP NAV ── */
+.employees-v2 .topnav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+  margin-left: -24px;
+  margin-right: -24px;
+  margin-top: -24px;
+}
+.employees-v2 .logo-mark {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 800; letter-spacing: -0.5px;
+}
+.employees-v2 .logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  border-radius: 9px;
+  display: grid; place-items: center;
+  font-size: 16px; color: #fff;
+}
+.employees-v2 .breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-dim);
+  margin-left: 8px;
+}
+.employees-v2 .breadcrumb span.active-crumb { color: var(--accent); font-weight: 600; }
+.employees-v2 .topnav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.employees-v2 .btn-add {
+  background: linear-gradient(135deg, var(--purple), var(--purple-blue));
+  color: #fff;
+  border: none; cursor: pointer;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  font-family: inherit;
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 4px 14px rgba(139,92,246,0.4);
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.employees-v2 .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139,92,246,0.5); }
+
+/* ── MAIN COMPONENTS ── */
+.employees-v2 .filters-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-top: 24px;
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.employees-v2 .filter-label { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
+.employees-v2 .filter-select, .employees-v2 .filter-input {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.employees-v2 .filter-select:focus, .employees-v2 .filter-input:focus { border-color: var(--purple); }
+.employees-v2 .filter-input { min-width: 200px; cursor: text; }
+.employees-v2 .filter-input::placeholder { color: var(--text-muted); }
+.employees-v2 .divider { width: 1px; height: 24px; background: var(--border2); }
+.employees-v2 .btn-reset {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text-dim);
+  font-family: inherit; font-size: 12px;
+  padding: 7px 14px; border-radius: 9px;
+  cursor: pointer; transition: all 0.2s;
+}
+.employees-v2 .btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── TABLE CARD ── */
+.employees-v2 .table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.employees-v2 .table-info {
+  padding: 16px 24px;
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.employees-v2 .table-info h2 { font-size: 15px; font-weight: 700; margin: 0; }
+.employees-v2 .count-badge {
+  background: var(--purple-light);
+  color: var(--accent);
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  border: 1px solid rgba(139,92,246,0.3);
+}
+.employees-v2 .table-wrap { overflow-x: auto; }
+
+.employees-v2 table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 780px;
+}
+
+/* Table Header */
+.employees-v2 thead tr {
+  background: var(--header-bg);
+}
+.employees-v2 th {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+.employees-v2 th:hover {
+  background: rgba(255,255,255,0.05);
+}
+.employees-v2 th .th-inner {
+  display: flex; align-items: center; gap: 6px;
+}
+.employees-v2 th .sort-icon {
+  display: flex; flex-direction: column; gap: 1px; opacity: 0.5;
+}
+.employees-v2 th .sort-icon span {
+  display: block; width: 0; height: 0;
+}
+.employees-v2 th .sort-icon .up   { border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 5px solid currentColor; }
+.employees-v2 th .sort-icon .down { border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; }
+.employees-v2 th:hover .sort-icon { opacity: 1; }
+.employees-v2 th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+
+/* Rows */
+.employees-v2 tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.employees-v2 tbody tr:last-child { border-bottom: none; }
+.employees-v2 tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.employees-v2 tbody tr:hover { background: rgba(139,92,246,0.07); }
+
+.employees-v2 td {
+  padding: 14px 18px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+.employees-v2 td.no { color: var(--text-dim); font-weight: 600; font-size: 12px; width: 48px; }
+.employees-v2 td.noid { font-family: monospace; font-size: 12px; color: var(--accent); font-weight: 700; white-space: nowrap; }
+
+/* Employee name cell */
+.employees-v2 .emp-cell { display: flex; align-items: center; gap: 12px; }
+.employees-v2 .emp-avatar {
+  width: 38px; height: 38px; border-radius: 12px;
+  display: grid; place-items: center;
+  font-size: 14px; font-weight: 700; flex-shrink: 0;
+  color: #fff;
+}
+.employees-v2 .emp-name { font-weight: 700; font-size: 13px; }
+.employees-v2 .emp-pos  { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+
+/* Divisi & Jabatan pill */
+.employees-v2 .pill {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Status badge */
+.employees-v2 .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.employees-v2 .status-badge .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+.employees-v2 .status-aktif   { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+.employees-v2 .status-aktif .dot { background: var(--green); }
+.employees-v2 .status-nonaktif { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+.employees-v2 .status-nonaktif .dot { background: var(--red); }
+
+/* Buttons in Table (Added Edit/Delete context) */
+.employees-v2 .action-btn {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text-dim);
+  width: 28px; height: 28px; border-radius: 6px;
+  cursor: pointer; transition: all 0.2s;
+  display: inline-grid; place-items: center;
+  margin-right: 4px;
+}
+.employees-v2 .action-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--text-dim); }
+.employees-v2 .action-btn.delete:hover { border-color: var(--red); color: var(--red); background: rgba(248,113,113,0.1); }
+
+/* ── EMPTY STATE ── */
+.employees-v2 .empty-state {
+  text-align: center; padding: 60px 20px;
+}
+.employees-v2 .empty-state .emoji { font-size: 40px; margin-bottom: 12px; display: block; }
+.employees-v2 .empty-state p { color: var(--text-dim); font-size: 13px; margin: 0; }
