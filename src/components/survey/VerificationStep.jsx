@@ -35,7 +35,7 @@ export default function VerificationStep({ data, updateField, onSubmit, onSaveDr
 
     // Validation checklist
     const checks = [
-        { label: 'Karyawan dipilih', pass: !!data.employeeName },
+        { label: 'Karyawan dipilih', pass: !!data.employee_name },
         { label: 'Lokasi dicapture/diisi manual', pass: !!data.latitude },
         { label: 'Akurasi GPS memadai / Input manual', pass: data.latitude ? (data.accuracy === 0 || data.accuracy === null || (data.accuracy && data.accuracy < 50)) : false },
         { label: 'Foto rumah (depan)', pass: !!data.photo0 },
