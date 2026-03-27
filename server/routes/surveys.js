@@ -6,7 +6,7 @@ import fs from 'fs';
 import db from '../database.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
+const UPLOAD_DIR = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'uploads') : path.join(__dirname, '..', 'uploads');
 
 // Ensure uploads directory exists
 if (!fs.existsSync(UPLOAD_DIR)) {

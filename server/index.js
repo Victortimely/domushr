@@ -11,6 +11,8 @@ import surveyRoutes from './routes/surveys.js';
 import adminRoutes from './routes/admin.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const UPLOADS_PATH = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'uploads') : path.join(__dirname, 'uploads');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -25,7 +27,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ===== Static Files =====
 // Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(UPLOADS_PATH));
 
 // ===== API Routes =====
 // Public routes (no auth required)
