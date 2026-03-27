@@ -250,6 +250,9 @@ export default function EmployeesPage() {
                                     <th onClick={() => handleSort('position')} className={sortKey === 'position' ? 'sorted' : ''}>
                                         <div className="th-inner">Jabatan {renderSortIcon('position')}</div>
                                     </th>
+                                    <th onClick={() => handleSort('address')} className={sortKey === 'address' ? 'sorted' : ''}>
+                                        <div className="th-inner">Alamat KTP {renderSortIcon('address')}</div>
+                                    </th>
                                     <th onClick={() => handleSort('status')} className={sortKey === 'status' ? 'sorted' : ''}>
                                         <div className="th-inner">Status Karyawan {renderSortIcon('status')}</div>
                                     </th>
@@ -290,6 +293,11 @@ export default function EmployeesPage() {
                                                 </td>
                                                 <td>
                                                     {e.position ? <span className="pill" style={{ background: jc.bg, color: jc.color }}>{e.position}</span> : '-'}
+                                                </td>
+                                                <td>
+                                                    <div style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.address}>
+                                                        {e.address ? <span style={{ color: 'var(--text)', fontSize: '12px' }}>{e.address}</span> : <span style={{ color: 'var(--text-dim)' }}>-</span>}
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <span className={`status-badge ${sc}`}>
@@ -350,6 +358,16 @@ export default function EmployeesPage() {
                                         <option value="Cleaning Service">Cleaning Service</option>
                                         <option value="Leader">Leader</option>
                                     </select>
+                                </div>
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">Alamat KTP</label>
+                                    <input className="form-input" value={form.address} onChange={(e) => updateForm('address', e.target.value)} placeholder="Sesuai KTP" />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Alamat Saat Ini</label>
+                                    <input className="form-input" value={form.currentAddress} onChange={(e) => updateForm('currentAddress', e.target.value)} placeholder="Domisili aktif" />
                                 </div>
                             </div>
                             <div className="form-group">
