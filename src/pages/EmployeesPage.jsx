@@ -17,7 +17,7 @@ const JABATAN_COLORS = {
   'Staff':            { bg:'rgba(148,163,184,0.15)', color:'#94a3b8' },
   'Custody':          { bg:'rgba(79,142,247,0.15)',  color:'#60a5fa' },
   'Teller':           { bg:'rgba(139,92,246,0.15)',  color:'#a78bfa' },
-  'Customer Service': { bg:'rgba(52,211,153,0.15)',  color:'#34d399' },
+  'Cleaning Service': { bg:'rgba(52,211,153,0.15)',  color:'#34d399' },
   'Leader':           { bg:'rgba(251,191,36,0.15)',  color:'#fbbf24' },
 };
 const AVATAR_COLORS = [
@@ -208,7 +208,11 @@ export default function EmployeesPage() {
                     </select>
                     <select className="filter-select" value={fJabatan} onChange={(e) => setFJabatan(e.target.value)}>
                         <option value="">Semua Jabatan</option>
-                        {Object.keys(JABATAN_COLORS).map(j => <option key={j} value={j}>{j}</option>)}
+                        <option value="Staff">Staff</option>
+                        <option value="Custody">Custody</option>
+                        <option value="Teller">Teller</option>
+                        <option value="Cleaning Service">Cleaning Service</option>
+                        <option value="Leader">Leader</option>
                     </select>
                     <select className="filter-select" value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
                         <option value="">Semua Status</option>
@@ -340,7 +344,11 @@ export default function EmployeesPage() {
                                     <label className="form-label">Jabatan</label>
                                     <select className="form-select" value={form.position} onChange={(e) => updateForm('position', e.target.value)}>
                                         <option value="" disabled>Pilih jabatan</option>
-                                        {Object.keys(JABATAN_COLORS).map(j => <option key={j} value={j}>{j}</option>)}
+                                        <option value="Staff">Staff</option>
+                                        <option value="Custody">Custody</option>
+                                        <option value="Teller">Teller</option>
+                                        <option value="Cleaning Service">Cleaning Service</option>
+                                        <option value="Leader">Leader</option>
                                     </select>
                                 </div>
                             </div>
@@ -388,7 +396,7 @@ export default function EmployeesPage() {
                             </p>
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <button className="btn-cancel" style={{ flex: 1 }} onClick={() => setDeleteTarget(null)}>Batal</button>
-                                <button className="btn-save" style={{ flex: 1, background: 'var(--red)', boxShadow: '0 4px 14px rgba(248,113,113,0.3)' }} onClick={confirmDelete}>
+                                <button className="btn-delete" style={{ flex: 1 }} onClick={confirmDelete}>
                                     🗑️ Ya, Hapus
                                 </button>
                             </div>
