@@ -31,6 +31,7 @@ db.exec(`
     position TEXT DEFAULT '',
     address TEXT DEFAULT '',
     current_address TEXT DEFAULT '',
+    status TEXT DEFAULT '',
     created_at TEXT DEFAULT (datetime('now'))
   );
 
@@ -90,7 +91,16 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT
   );
+  );
 `);
+
+// Migration for adding status to employees if it doesn't exist
+try {
+  db.exec('ALTER TABLE employees ADD COLUMN status TEXT DEFAULT ""');
+  console.log('✅ Migrated: added status column to employees table');
+} catch (e) {
+  // column already exists
+}
 
 // Seed default users if none exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();

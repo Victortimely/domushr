@@ -28,7 +28,7 @@ router.get('/:id', (req, res) => {
 // POST /api/employees — create employee
 router.post('/', (req, res) => {
   try {
-    const { nik, name, department, position, address, current_address } = req.body;
+    const { nik, name, department, position, address, current_address, status } = req.body;
     if (!nik || !name) {
       return res.status(400).json({ error: 'NIK dan Nama wajib diisi.' });
     }
@@ -37,8 +37,8 @@ router.post('/', (req, res) => {
       return res.status(409).json({ error: 'NIK sudah terdaftar.' });
     }
     const result = db.prepare(
-      'INSERT INTO employees (nik, name, department, position, address, current_address) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(nik, name, department || '', position || '', address || '', current_address || '');
+      'INSERT INTO employees (nik, name, department, position, address, current_address, status) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(nik, name, department || '', position || '', address || '', current_address || '', status || '');
 
     const emp = db.prepare('SELECT * FROM employees WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(emp);
@@ -51,16 +51,16 @@ router.post('/', (req, res) => {
 // PUT /api/employees/:id — update employee
 router.put('/:id', (req, res) => {
   try {
-    const { nik, name, department, position, address, current_address } = req.body;
+    const { nik, name, department, position, address, current_address, status } = req.body;
     const emp = db.prepare('SELECT * FROM employees WHERE id = ?').get(req.params.id);
     if (!emp) return res.status(404).json({ error: 'Karyawan tidak ditemukan.' });
 
     db.prepare(
-      'UPDATE employees SET nik=?, name=?, department=?, position=?, address=?, current_address=? WHERE id=?'
+      'UPDATE employees SET nik=?, name=?, department=?, position=?, address=?, current_address=?, status=? WHERE id=?'
     ).run(
       nik || emp.nik, name || emp.name, department ?? emp.department,
       position ?? emp.position, address ?? emp.address,
-      current_address ?? emp.current_address, req.params.id
+      current_address ?? emp.current_address, status ?? emp.status, req.params.id
     );
 
     const updated = db.prepare('SELECT * FROM employees WHERE id = ?').get(req.params.id);
@@ -97,13 +97,13 @@ router.post('/import', (req, res) => {
       return res.status(400).json({ error: 'Data karyawan harus berupa array.' });
     }
     const insert = db.prepare(
-      'INSERT OR IGNORE INTO employees (nik, name, department, position, address, current_address) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT OR IGNORE INTO employees (nik, name, department, position, address, current_address, status) VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
     let imported = 0;
     const tx = db.transaction(() => {
       for (const emp of employees) {
         if (emp.nik && emp.name) {
-          const result = insert.run(emp.nik, emp.name, emp.department || '', emp.position || '', emp.address || '', emp.current_address || '');
+          const result = insert.run(emp.nik, emp.name, emp.department || '', emp.position || '', emp.address || '', emp.current_address || '', emp.status || '');
           if (result.changes > 0) imported++;
         }
       }
