@@ -91,6 +91,23 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS trips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT DEFAULT 'luar-kota',
+    start_date TEXT,
+    end_date TEXT,
+    itinerary TEXT DEFAULT '[]',
+    budget TEXT DEFAULT '{"total":0,"items":[]}',
+    packing TEXT DEFAULT '{}',
+    members TEXT DEFAULT '[]',
+    vetting_targets TEXT DEFAULT '[]',
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
 `);
 
 // Migration for adding status to employees if it doesn't exist

@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import employeeRoutes from './routes/employees.js';
 import surveyRoutes from './routes/surveys.js';
 import adminRoutes from './routes/admin.js';
+import tripRoutes from './routes/trips.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_PATH = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'uploads') : path.join(__dirname, 'uploads');
@@ -60,6 +61,7 @@ app.post('/api/password-reset-request', (req, res) => {
 app.use('/api/employees', authenticateToken, employeeRoutes);
 app.use('/api/surveys', authenticateToken, surveyRoutes);
 app.use('/api/admin', authenticateToken, adminRoutes);
+app.use('/api/trips', authenticateToken, tripRoutes);
 
 // Settings endpoints
 app.get('/api/settings/:key', authenticateToken, (req, res) => {

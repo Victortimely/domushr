@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import '../styles/planner.css';
@@ -60,15 +60,14 @@ export default function SurveyPlannerPage() {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState('trips');
   const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ── All trips stored locally
-  const [trips, setTrips] = useState(() => {
-    try {
-      const saved = localStorage.getItem('domushr_planner_trips');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  // ── All trips from API
+  const [trips, setTrips] = useState([]);
   const [activeTripId, setActiveTripId] = useState(null);
+
+  // ── Save debounce ref
+  const saveTimerRef = useRef(null);
 
   // ── Modal states
   const [showTripModal, setShowTripModal] = useState(false);
@@ -91,15 +90,22 @@ export default function SurveyPlannerPage() {
   const [editingBudgetTotal, setEditingBudgetTotal] = useState(false);
   const [budgetTotalInput, setBudgetTotalInput] = useState('');
 
-  // ── Persist trips
-  useEffect(() => {
-    localStorage.setItem('domushr_planner_trips', JSON.stringify(trips));
-  }, [trips]);
-
-  // ── Load employees for vetting target
-  useEffect(() => {
-    api.get('/employees').then(setEmployees).catch(() => {});
+  // ── Load trips from API
+  const loadTrips = useCallback(async () => {
+    try {
+      const data = await api.get('/trips');
+      setTrips(data);
+    } catch (err) {
+      console.error('Failed to load trips:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadTrips();
+    api.get('/employees').then(setEmployees).catch(() => {});
+  }, [loadTrips]);
 
   // ── Active trip
   const activeTrip = useMemo(() => trips.find(t => t.id === activeTripId), [trips, activeTripId]);
@@ -111,43 +117,98 @@ export default function SurveyPlannerPage() {
     }
   }, [trips, activeTripId]);
 
+  /* ═══════════ HELPER: save trip to API (debounced) ═══════════ */
+  const saveTripToAPI = useCallback(async (tripId, data) => {
+    try {
+      await api.put(`/trips/${tripId}`, data);
+    } catch (err) {
+      console.error('Auto-save failed:', err);
+      toast.error('Gagal menyimpan perubahan');
+    }
+  }, [toast]);
+
+  // Debounced save for sub-item changes (itinerary, budget, packing, members, vetting)
+  const debouncedSave = useCallback((tripId, data) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTripToAPI(tripId, data);
+    }, 500);
+  }, [saveTripToAPI]);
+
+  /* ═══════════ HELPER: update active trip locally + save to API ═══════════ */
+  const updateActiveTrip = useCallback((updater) => {
+    setTrips(prev => {
+      const updated = prev.map(t => {
+        if (t.id !== activeTripId) return t;
+        const newTrip = updater(t);
+        // Debounced save to API
+        debouncedSave(activeTripId, {
+          itinerary: newTrip.itinerary,
+          budget: newTrip.budget,
+          packing: newTrip.packing,
+          members: newTrip.members,
+          vettingTargets: newTrip.vettingTargets,
+        });
+        return newTrip;
+      });
+      return updated;
+    });
+  }, [activeTripId, debouncedSave]);
+
   /* ═══════════════════ TRIP CRUD ═══════════════════ */
-  const handleSaveTrip = () => {
+  const handleSaveTrip = async () => {
     if (!tripForm.name.trim()) {
       toast.error('Nama trip wajib diisi');
       return;
     }
-    if (editingTrip) {
-      setTrips(prev => prev.map(t => t.id === editingTrip.id ? { ...t, ...tripForm } : t));
-      toast.success('Trip diperbarui');
-    } else {
-      const newTrip = {
-        id: generateId(),
-        ...tripForm,
-        createdAt: new Date().toISOString(),
-        itinerary: [],
-        budget: { total: 0, items: [] },
-        packing: JSON.parse(JSON.stringify(DEFAULT_PACKING)),
-        members: [],
-        vettingTargets: [],
-      };
-      setTrips(prev => [newTrip, ...prev]);
-      setActiveTripId(newTrip.id);
-      toast.success('Trip baru berhasil dibuat');
+    try {
+      if (editingTrip) {
+        const updated = await api.put(`/trips/${editingTrip.id}`, {
+          name: tripForm.name,
+          type: tripForm.type,
+          startDate: tripForm.startDate || null,
+          endDate: tripForm.endDate || null,
+        });
+        setTrips(prev => prev.map(t => t.id === editingTrip.id ? updated : t));
+        toast.success('Trip diperbarui');
+      } else {
+        const newTrip = await api.post('/trips', {
+          name: tripForm.name,
+          type: tripForm.type,
+          startDate: tripForm.startDate || null,
+          endDate: tripForm.endDate || null,
+          packing: DEFAULT_PACKING,
+        });
+        setTrips(prev => [newTrip, ...prev]);
+        setActiveTripId(newTrip.id);
+        toast.success('Trip baru berhasil dibuat');
+      }
+      setShowTripModal(false);
+      setEditingTrip(null);
+    } catch (err) {
+      toast.error(err.message || 'Gagal menyimpan trip');
     }
-    setShowTripModal(false);
-    setEditingTrip(null);
   };
 
-  const handleDeleteTrip = (tripId) => {
-    setTrips(prev => prev.filter(t => t.id !== tripId));
-    if (activeTripId === tripId) setActiveTripId(null);
-    toast.success('Trip dihapus');
+  const handleDeleteTrip = async (tripId) => {
+    try {
+      await api.delete(`/trips/${tripId}`);
+      setTrips(prev => prev.filter(t => t.id !== tripId));
+      if (activeTripId === tripId) setActiveTripId(null);
+      toast.success('Trip dihapus');
+    } catch (err) {
+      toast.error(err.message || 'Gagal menghapus trip');
+    }
   };
 
   const openEditTrip = (trip) => {
     setEditingTrip(trip);
-    setTripForm({ name: trip.name, type: trip.type, startDate: trip.startDate || '', endDate: trip.endDate || '' });
+    setTripForm({
+      name: trip.name,
+      type: trip.type,
+      startDate: trip.start_date || trip.startDate || '',
+      endDate: trip.end_date || trip.endDate || '',
+    });
     setShowTripModal(true);
   };
 
@@ -156,11 +217,6 @@ export default function SurveyPlannerPage() {
     setTripForm({ name: '', type: 'luar-kota', startDate: '', endDate: '' });
     setShowTripModal(true);
   };
-
-  /* ═══════════ HELPER: update active trip ═══════════ */
-  const updateActiveTrip = useCallback((updater) => {
-    setTrips(prev => prev.map(t => t.id === activeTripId ? updater(t) : t));
-  }, [activeTripId]);
 
   /* ═══════════════ ITINERARY CRUD ═══════════════ */
   const handleSaveItinerary = () => {
@@ -258,7 +314,6 @@ export default function SurveyPlannerPage() {
       packing[catName].items.splice(index, 1);
       if (packing[catName]._checked) {
         delete packing[catName]._checked[index];
-        // Re-index checked
         const newChecked = {};
         Object.keys(packing[catName]._checked).forEach(k => {
           const ki = Number(k);
@@ -338,6 +393,17 @@ export default function SurveyPlannerPage() {
   /* ═══════════════════════════════════════════
      RENDER
      ═══════════════════════════════════════════ */
+  if (loading) {
+    return (
+      <div className="planner-v2" style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:'2rem',marginBottom:'12px'}}>🗺️</div>
+          <p style={{color:'var(--text-dim)',fontSize:'14px'}}>Memuat data planner...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="planner-v2">
       {/* Page Header */}
@@ -586,38 +652,42 @@ function TripsTab({ trips, activeTripId, onSelect, onEdit, onDelete }) {
         <span className="count-pill">{trips.length} Trip</span>
       </div>
       <div className="trips-grid">
-        {trips.map(trip => (
-          <div key={trip.id} className={`trip-card ${activeTripId === trip.id ? 'active' : ''}`} onClick={() => onSelect(trip.id)}>
-            <div className="trip-top">
-              <span className={`trip-type-badge ${trip.type}`}>
-                {trip.type === 'luar-kota' ? '✈️ Luar Kota' : '🚗 Jabodetabek'}
-              </span>
-            </div>
-            <div className="trip-title">{trip.name}</div>
-            <div className="trip-date">
-              {trip.startDate ? `${trip.startDate}` : 'Tanggal belum diset'}
-              {trip.endDate ? ` → ${trip.endDate}` : ''}
-            </div>
-            <div className="trip-stats">
-              <div className="trip-stat">
-                <span className="trip-stat-val">{trip.itinerary?.length || 0}</span>
-                <span className="trip-stat-lbl">Karyawan</span>
+        {trips.map(trip => {
+          const startDate = trip.start_date || trip.startDate;
+          const endDate = trip.end_date || trip.endDate;
+          return (
+            <div key={trip.id} className={`trip-card ${activeTripId === trip.id ? 'active' : ''}`} onClick={() => onSelect(trip.id)}>
+              <div className="trip-top">
+                <span className={`trip-type-badge ${trip.type}`}>
+                  {trip.type === 'luar-kota' ? '✈️ Luar Kota' : '🚗 Jabodetabek'}
+                </span>
               </div>
-              <div className="trip-stat">
-                <span className="trip-stat-val">{trip.members?.length || 0}</span>
-                <span className="trip-stat-lbl">Anggota</span>
+              <div className="trip-title">{trip.name}</div>
+              <div className="trip-date">
+                {startDate ? `${startDate}` : 'Tanggal belum diset'}
+                {endDate ? ` → ${endDate}` : ''}
               </div>
-              <div className="trip-stat">
-                <span className="trip-stat-val">{trip.budget?.items?.length || 0}</span>
-                <span className="trip-stat-lbl">Budget</span>
+              <div className="trip-stats">
+                <div className="trip-stat">
+                  <span className="trip-stat-val">{trip.itinerary?.length || 0}</span>
+                  <span className="trip-stat-lbl">Karyawan</span>
+                </div>
+                <div className="trip-stat">
+                  <span className="trip-stat-val">{trip.members?.length || 0}</span>
+                  <span className="trip-stat-lbl">Anggota</span>
+                </div>
+                <div className="trip-stat">
+                  <span className="trip-stat-val">{trip.budget?.items?.length || 0}</span>
+                  <span className="trip-stat-lbl">Budget</span>
+                </div>
+              </div>
+              <div className="trip-actions">
+                <button className="trip-action-btn" onClick={(e) => { e.stopPropagation(); onEdit(trip); }} title="Edit">✏️</button>
+                <button className="trip-action-btn delete" onClick={(e) => { e.stopPropagation(); onDelete(trip.id); }} title="Hapus">🗑️</button>
               </div>
             </div>
-            <div className="trip-actions">
-              <button className="trip-action-btn" onClick={(e) => { e.stopPropagation(); onEdit(trip); }} title="Edit">✏️</button>
-              <button className="trip-action-btn delete" onClick={(e) => { e.stopPropagation(); onDelete(trip.id); }} title="Hapus">🗑️</button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -645,7 +715,7 @@ function ItineraryTab({ trip, onAdd, onEdit, onDelete }) {
         </div>
       ) : (
         <div className="itinerary-list">
-          {sorted.map((item, idx) => (
+          {sorted.map((item) => (
             <div key={item.id} className="itinerary-item">
               <div className="day-badge">
                 <span style={{fontSize:'9px',opacity:0.7}}>HARI</span>
@@ -686,7 +756,6 @@ function BudgetTab({ trip, onAddBudget, onDeleteBudget, editingTotal, budgetTota
         <button className="btn-action primary" onClick={onAddBudget}>➕ Tambah Budget</button>
       </div>
 
-      {/* Budget Summary Cards */}
       <div className="budget-summary">
         <div className="budget-stat">
           <div className="stat-label">Total Budget</div>
@@ -712,7 +781,6 @@ function BudgetTab({ trip, onAddBudget, onDeleteBudget, editingTotal, budgetTota
         </div>
       </div>
 
-      {/* Budget Items */}
       {(trip.budget?.items || []).length === 0 ? (
         <div className="empty-state" style={{padding:'30px 20px'}}>
           <div className="empty-icon">💸</div>
@@ -813,7 +881,6 @@ function MembersTab({ trip, onAddMember, onRemoveMember, onAddVetting, onRemoveV
 
   return (
     <div className="section-card">
-      {/* Team Members */}
       <div className="card-header">
         <h2>👥 Anggota Tim</h2>
         <button className="btn-action primary" onClick={onAddMember}>👤 Tambah Anggota</button>
@@ -839,7 +906,6 @@ function MembersTab({ trip, onAddMember, onRemoveMember, onAddVetting, onRemoveV
         </div>
       )}
 
-      {/* Vetting Targets */}
       <div className="vetting-section">
         <h3>
           🎯 Karyawan Yang Harus Di Vetting
