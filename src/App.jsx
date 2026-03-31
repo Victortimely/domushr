@@ -12,6 +12,7 @@ import SurveyDetailPage from './pages/SurveyDetailPage';
 import EmployeesPage from './pages/EmployeesPage';
 import ImportPage from './pages/ImportPage';
 import AdminPage from './pages/AdminPage';
+import SurveyPlannerPage from './pages/SurveyPlannerPage';
 
 function LiveClock() {
     const [now, setNow] = useState(new Date());
@@ -101,6 +102,7 @@ function AppContent() {
     const menuItems = [
         { to: '/', icon: '📊', label: 'Dashboard', end: true },
         { to: '/survey/new', icon: '➕', label: 'Survey Baru' },
+        { to: '/planner', icon: '🗺️', label: 'Survey Planner' },
         { to: '/employees', icon: '👥', label: 'Karyawan' },
         { to: '/import', icon: '📥', label: 'Import' },
         { to: '/history', icon: '🕐', label: 'Riwayat' },
@@ -185,6 +187,7 @@ function AppContent() {
                     <Route path="/survey/new" element={<SurveyFormPage />} />
                     <Route path="/survey/:id" element={<SurveyFormPage />} />
                     <Route path="/detail/:id" element={<SurveyDetailPage />} />
+                    <Route path="/planner" element={<SurveyPlannerPage />} />
                     <Route path="/employees" element={<EmployeesPage />} />
                     <Route path="/import" element={<ImportPage />} />
                     <Route path="/admin" element={<AdminPage />} />
