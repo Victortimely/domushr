@@ -104,7 +104,7 @@ function BarChart({ data }) {
               {data.map((d, i) => {
                   const pct = (d.value / maxVal) * 100;
                   return (
-                      <div key={i} className="bar-col">
+                      <div key={i} className="bar-col" style={{ height: '100%', justifyContent: 'flex-end' }}>
                         <span className="bar-val">{d.value}</span>
                         <div className="bar" style={{height: `${pct}%`, minHeight:'8px'}} title={`${d.label}: ${d.value} karyawan`}></div>
                         <span className="bar-month">{d.label}</span>
