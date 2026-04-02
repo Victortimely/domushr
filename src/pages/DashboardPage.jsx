@@ -150,6 +150,7 @@ export default function DashboardPage() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [mapCounts, setMapCounts] = useState([]);
+    const [newMarker, setNewMarker] = useState({ name: '', top: 50, left: 50, count: 0 });
 
     useEffect(() => {
         const saved = localStorage.getItem('indonesiaMapData');
@@ -165,6 +166,25 @@ export default function DashboardPage() {
         const updated = mapCounts.map(m => m.id === id ? { ...m, count: newCount } : m);
         setMapCounts(updated);
         localStorage.setItem('indonesiaMapData', JSON.stringify(updated));
+    };
+
+    const handleAddMarker = () => {
+        if (!newMarker.name) {
+            toast.error('Nama lokasi tidak boleh kosong');
+            return;
+        }
+        const added = [...mapCounts, { id: Date.now(), name: newMarker.name, top: newMarker.top, left: newMarker.left, count: newMarker.count }];
+        setMapCounts(added);
+        localStorage.setItem('indonesiaMapData', JSON.stringify(added));
+        setNewMarker({ name: '', top: 50, left: 50, count: 0 });
+        toast.success('Lokasi berhasil ditambahkan');
+    };
+
+    const handleDeleteMarker = (id) => {
+        const updated = mapCounts.filter(m => m.id !== id);
+        setMapCounts(updated);
+        localStorage.setItem('indonesiaMapData', JSON.stringify(updated));
+        toast.success('Lokasi dihapus');
     };
 
     async function loadData() {
@@ -360,38 +380,82 @@ export default function DashboardPage() {
             </div>
 
             {/* Vector Map Section */}
-            <div className="grid">
-                <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-                    <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>📍 Peta Sebaran Karyawan</h2>
-                    <div style={{ flex: 1, position: 'relative', width: '100%', minHeight: '300px', background: 'url("https://vemaps.com/uploads/img/id-02.png") center/100% 100% no-repeat' }}>
-                        {mapCounts.map(marker => (
-                            <div key={marker.id} className="map-pin-group" style={{ position: 'absolute', top: `${marker.top}%`, left: `${marker.left}%`, transform: 'translate(-50%, -100%)' }}>
-                                <div className="map-pin"></div>
-                                <div className="map-pin-pulse"></div>
-                                <div className="map-tooltip">
-                                    <div className="map-tooltip-title">{marker.name}</div>
-                                    <div className="map-tooltip-val">{marker.count} <span>karyawan</span></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: '24px', padding: '24px' }}>
+                <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>📍 Peta Sebaran Karyawan</h2>
                 
-                <div className="card" style={{ display: 'flex', flexDirection: 'column', maxHeight: '420px' }}>
-                    <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>✏️ Edit Peta Sekitar</h2>
-                    <div style={{ overflowY: 'auto', flex: 1, paddingRight: '12px' }}>
-                        {mapCounts.map(marker => (
-                            <div key={marker.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: 'var(--surface2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
-                                <span style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>{marker.name}</span>
+                {/* Visual Map Area */}
+                <div style={{ position: 'relative', width: '100%', minHeight: '400px', background: 'var(--surface2)', borderRadius: '16px', overflow: 'hidden' }}>
+                    <img 
+                        src="https://vemaps.com/uploads/img/id-02.png" 
+                        alt="Map" 
+                        style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'fill', filter: 'brightness(2.2) contrast(1.1) sepia(0.3) hue-rotate(180deg) opacity(0.8)', pointerEvents: 'none' }} 
+                    />
+                    
+                    {mapCounts.map(marker => (
+                        <div key={marker.id} className="map-pin-group" style={{ position: 'absolute', top: `${marker.top}%`, left: `${marker.left}%`, transform: 'translate(-50%, -50%)' }}>
+                            <div className="map-pin"></div>
+                            <div className="map-pin-pulse"></div>
+                            {/* Permanent Text Label Below Pin */}
+                            <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '6px', textAlign: 'center', pointerEvents: 'none', width: '100px' }}>
+                                <div style={{ fontSize: '10px', fontWeight: 600, color: '#f1f5f9', textShadow: '0px 1px 3px rgba(0,0,0,0.9), 0px 0px 2px rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{marker.name}</div>
+                                <div style={{ fontSize: '12px', fontWeight: 800, color: '#10d9b4', textShadow: '0px 1px 3px rgba(0,0,0,0.9)' }}>{marker.count}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <hr style={{ border: 'none', borderBottom: '1px solid var(--border)', margin: '24px 0' }} />
+
+                {/* Edit Menu Area */}
+                <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>✏️ Edit & Tambah Lokasi</h2>
+                
+                {/* Data List Editor */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px', maxHeight: '250px', overflowY: 'auto', paddingRight: '8px' }}>
+                    {mapCounts.map(marker => (
+                        <div key={marker.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{marker.name}</span>
+                                <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>Posisi: X={marker.left}% Y={marker.top}%</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <input 
                                     type="number" 
                                     value={marker.count} 
                                     onChange={(e) => updateMapCount(marker.id, parseInt(e.target.value) || 0)}
-                                    style={{ width: '56px', background: 'var(--bg)', border: '1px solid var(--purple)', color: 'var(--accent)', padding: '6px', borderRadius: '6px', textAlign: 'center', fontWeight: 'bold' }}
+                                    title="Jumlah Karyawan"
+                                    style={{ width: '60px', background: 'var(--bg)', border: '1px solid var(--purple)', color: 'var(--text)', padding: '6px', borderRadius: '6px', textAlign: 'center', fontWeight: 'bold' }}
                                 />
+                                <button 
+                                    onClick={() => handleDeleteMarker(marker.id)}
+                                    style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '16px', padding: '4px' }}
+                                    title="Hapus Lokasi"
+                                >
+                                    ✖
+                                </button>
                             </div>
-                        ))}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Add New Point Form */}
+                <div style={{ background: 'var(--surface2)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-end' }}>
+                    <div style={{ flex: '1 1 200px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Nama Daerah</label>
+                        <input className="form-input" style={{ background: 'var(--bg)', padding: '8px 12px' }} placeholder="Cth: Makassar" value={newMarker.name} onChange={(e) => setNewMarker({...newMarker, name: e.target.value})} />
                     </div>
+                    <div style={{ width: '80px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Kiri (X %)</label>
+                        <input className="form-input" type="number" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.left} onChange={(e) => setNewMarker({...newMarker, left: e.target.value})} />
+                    </div>
+                    <div style={{ width: '80px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Atas (Y %)</label>
+                        <input className="form-input" type="number" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.top} onChange={(e) => setNewMarker({...newMarker, top: e.target.value})} />
+                    </div>
+                    <div style={{ width: '100px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Jml. Karyawan</label>
+                        <input className="form-input" type="number" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.count} onChange={(e) => setNewMarker({...newMarker, count: Number(e.target.value)})} />
+                    </div>
+                    <button className="btn btn-primary" onClick={handleAddMarker} style={{ padding: '8px 16px', height: '38px', borderRadius: '8px' }}>+ Tambah</button>
                 </div>
             </div>
 
