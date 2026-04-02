@@ -9,6 +9,8 @@ export default function HistoryPage() {
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [time, setTime] = useState(new Date());
+    const [showFilter, setShowFilter] = useState(false);
+    const [sort, setSort] = useState('newest');
 
     useEffect(() => {
         loadSurveys();
@@ -27,21 +29,32 @@ export default function HistoryPage() {
     }
 
     useEffect(() => {
-        let result = surveys;
+        let result = [...surveys];
         if (search) {
             const q = search.toLowerCase();
             result = result.filter(
                 (s) =>
-                    s.employee_name?.toLowerCase().includes(q) ||
-                    s.surveyor_name?.toLowerCase().includes(q) ||
-                    s.employee_nik?.toLowerCase().includes(q)
+                    String(s.employee_name || '').toLowerCase().includes(q) ||
+                    String(s.surveyor_name || '').toLowerCase().includes(q) ||
+                    String(s.employee_nik || '').toLowerCase().includes(q)
             );
         }
         if (filterStatus !== 'all') {
             result = result.filter((s) => s.status === filterStatus);
         }
+
+        if (sort === 'newest') {
+            result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        } else if (sort === 'oldest') {
+            result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        } else if (sort === 'name_asc') {
+            result.sort((a, b) => String(a.employee_name || '').localeCompare(String(b.employee_name || '')));
+        } else if (sort === 'name_desc') {
+            result.sort((a, b) => String(b.employee_name || '').localeCompare(String(a.employee_name || '')));
+        }
+
         setFiltered(result);
-    }, [search, filterStatus, surveys]);
+    }, [search, filterStatus, surveys, sort]);
 
     const counts = {
         all: surveys.length,
@@ -84,7 +97,7 @@ export default function HistoryPage() {
                     <h1>Riwayat <span>Survey</span></h1>
                     <p>{surveys.length} entri tercatat · Diperbarui baru saja</p>
                 </div>
-                <Link to="/survey" className="add-btn">
+                <Link to="/survey/new" className="add-btn">
                     <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Tambah Survey
                 </Link>
@@ -130,10 +143,20 @@ export default function HistoryPage() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <button className="filter-btn">
-                    <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                    Filter
-                </button>
+                <div style={{ position: 'relative' }}>
+                    <button className="filter-btn" onClick={() => setShowFilter(!showFilter)}>
+                        <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                        Filter {sort !== 'newest' && <span style={{display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#3d8ef8', marginLeft: '4px'}}></span>}
+                    </button>
+                    {showFilter && (
+                        <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', zIndex: 10, minWidth: '150px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                            <button className={`tab ${sort === 'newest' ? 'active' : ''}`} style={{ width: '100%', textAlign: 'left', justifyContent: 'flex-start' }} onClick={() => { setSort('newest'); setShowFilter(false); }}>Terbaru</button>
+                            <button className={`tab ${sort === 'oldest' ? 'active' : ''}`} style={{ width: '100%', textAlign: 'left', justifyContent: 'flex-start' }} onClick={() => { setSort('oldest'); setShowFilter(false); }}>Terlama</button>
+                            <button className={`tab ${sort === 'name_asc' ? 'active' : ''}`} style={{ width: '100%', textAlign: 'left', justifyContent: 'flex-start' }} onClick={() => { setSort('name_asc'); setShowFilter(false); }}>Nama A-Z</button>
+                            <button className={`tab ${sort === 'name_desc' ? 'active' : ''}`} style={{ width: '100%', textAlign: 'left', justifyContent: 'flex-start' }} onClick={() => { setSort('name_desc'); setShowFilter(false); }}>Nama Z-A</button>
+                        </div>
+                    )}
+                </div>
                 <button className="filter-btn">
                     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
                     Ekspor
