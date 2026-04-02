@@ -186,11 +186,12 @@ export default function AdminPage() {
                         <path d="M5.5 8.5L7 10l3.5-3.5" stroke="var(--purple, #8b5cf6)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                 </div>
-                <div className="logo-info">
-                    <div className="logo-name">Admin Master</div>
-                    <div className="logo-sub">PANEL</div>
+                <div className="logo-info" style={{ display: 'flex', alignItems: 'center', marginLeft: '12px' }}>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                        Admin Master <span style={{ color: 'var(--purple, #8b5cf6)' }}>Panel</span>
+                    </h1>
                 </div>
-                <div className="sp-nav-items">
+                <div className="sp-nav-items" style={{ marginLeft: '2rem' }}>
                     <button className={`sp-nav-item ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>Ringkasan</button>
                     <button className={`sp-nav-item ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>List User ID</button>
                     <button className={`sp-nav-item ${tab === 'password' ? 'active' : ''}`} onClick={() => setTab('password')}>
@@ -201,7 +202,7 @@ export default function AdminPage() {
                     </button>
                 </div>
                 <div className="adm-right">
-                    <div className="sp-avatar">SA</div>
+                    {/* AVATAR REMOVED PER USER REQUEST */}
                 </div>
             </div>
 
