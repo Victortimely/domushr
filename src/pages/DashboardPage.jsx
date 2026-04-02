@@ -585,12 +585,12 @@ export default function DashboardPage() {
                             <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--surface2)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)' }}>
                                 <Link to={`/detail/${s.id}`} style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, textDecoration: 'none', color: 'inherit' }}>
                                     <div style={{ width: '40px', height: '40px', background: 'var(--surface)', borderRadius: '10px', display: 'grid', placeItems: 'center', fontWeight: 'bold', color: 'var(--purple)' }}>
-                                        {s.employeeName?.[0] || '?'}
+                                        {s.employee_name?.[0] || '?'}
                                     </div>
                                     <div style={{flex: 1}}>
-                                        <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '2px', color:'var(--text)' }}>{s.employeeName || 'Unnamed'}</div>
+                                        <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '2px', color:'var(--text)' }}>{s.employee_name || 'Unnamed'}</div>
                                         <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
-                                            📅 {new Date(s.createdAt).toLocaleDateString('id-ID')} · 👤 {s.surveyorName}
+                                            📅 {new Date(s.created_at).toLocaleDateString('id-ID')} · 👤 {s.surveyor_name}
                                         </div>
                                     </div>
                                     <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, 

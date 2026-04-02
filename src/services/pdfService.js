@@ -17,19 +17,19 @@ export async function generateSurveyPDF(survey) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`ID: SRV-${String(survey.id).padStart(4, '0')}`, pageWidth / 2, 28, { align: 'center' });
-    doc.text(`Tanggal: ${new Date(survey.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`, pageWidth / 2, 34, { align: 'center' });
+    doc.text(`Tanggal: ${new Date(survey.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`, pageWidth / 2, 34, { align: 'center' });
 
     y = 50;
     doc.setTextColor(30, 41, 59);
 
     // Section: Identitas
     y = addSection(doc, 'DATA IDENTITAS', y, margin, contentWidth);
-    y = addRow(doc, 'Nama Karyawan', survey.employeeName || '-', y, margin);
-    y = addRow(doc, 'NIK', survey.employeeNik || '-', y, margin);
-    y = addRow(doc, 'Departemen', survey.employeeDept || '-', y, margin);
-    y = addRow(doc, 'Jabatan', survey.employeePosition || '-', y, margin);
-    y = addRow(doc, 'Surveyor', survey.surveyorName || '-', y, margin);
-    y = addRow(doc, 'Tanggal Survey', formatDateTime(survey.createdAt), y, margin);
+    y = addRow(doc, 'Nama Karyawan', survey.employee_name || '-', y, margin);
+    y = addRow(doc, 'NIK', survey.employee_nik || '-', y, margin);
+    y = addRow(doc, 'Departemen', survey.employee_dept || '-', y, margin);
+    y = addRow(doc, 'Jabatan', survey.data?.employeePosition || '-', y, margin);
+    y = addRow(doc, 'Surveyor', survey.surveyor_name || '-', y, margin);
+    y = addRow(doc, 'Tanggal Survey', formatDateTime(survey.created_at), y, margin);
 
     y += 5;
 
@@ -55,7 +55,7 @@ export async function generateSurveyPDF(survey) {
     const photoLabels = ['Rumah (Depan)', 'Selfie dengan Karyawan', 'Foto dengan Ketua RT'];
     for (let i = 0; i < 3; i++) {
         const photoKey = `photo${i}`;
-        const photoData = survey[photoKey];
+        const photoData = survey.data?.[photoKey];
 
         if (y > 250) {
             doc.addPage();
@@ -90,7 +90,7 @@ export async function generateSurveyPDF(survey) {
     // Section: Audio
     if (y > 250) { doc.addPage(); y = 20; }
     y = addSection(doc, 'REKAMAN & CATATAN', y, margin, contentWidth);
-    y = addRow(doc, 'Audio', survey.audioBlob ? 'Tersimpan ✓' : 'Tidak ada', y, margin);
+    y = addRow(doc, 'Audio', survey.data?.audioBlob ? 'Tersimpan ✓' : 'Tidak ada', y, margin);
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
@@ -98,7 +98,7 @@ export async function generateSurveyPDF(survey) {
     y += 8;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    const summaryText = survey.interviewSummary || 'Tidak ada ringkasan';
+    const summaryText = survey.data?.interviewSummary || 'Tidak ada ringkasan';
     const splitSummary = doc.splitTextToSize(summaryText, contentWidth);
     doc.text(splitSummary, margin, y);
     y += splitSummary.length * 5 + 5;
@@ -133,7 +133,7 @@ export async function generateSurveyPDF(survey) {
     doc.text(`Status: ${survey.status?.toUpperCase() || 'DRAFT'}`, pageWidth / 2, y + 5, { align: 'center' });
 
     // Save
-    const filename = `Survey_${survey.employeeName?.replace(/\s+/g, '_') || 'Unknown'}_${new Date(survey.createdAt).toISOString().slice(0, 10)}.pdf`;
+    const filename = `Survey_${survey.employee_name?.replace(/\s+/g, '_') || 'Unknown'}_${new Date(survey.created_at).toISOString().slice(0, 10)}.pdf`;
     doc.save(filename);
     return filename;
 }
