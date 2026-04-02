@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps';
+import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -416,54 +416,56 @@ export default function DashboardPage() {
                             height: "auto",
                         }}
                     >
-                        <Geographies geography={indonesiaGeoJson}>
-                            {({ geographies }) =>
-                                geographies.map((geo) => (
-                                    <Geography
-                                        key={geo.rsmKey}
-                                        geography={geo}
-                                        fill="#e2e8f0"
-                                        stroke="#cbd5e1"
-                                        strokeWidth={0.5}
-                                        style={{
-                                            default: { outline: "none" },
-                                            hover: { fill: "#bfdbfe", outline: "none" },
-                                            pressed: { fill: "#93c5fd", outline: "none" },
-                                        }}
-                                    />
-                                ))
-                            }
-                        </Geographies>
+                        <ZoomableGroup zoom={1} maxZoom={10} minZoom={1}>
+                            <Geographies geography={indonesiaGeoJson}>
+                                {({ geographies }) =>
+                                    geographies.map((geo) => (
+                                        <Geography
+                                            key={geo.rsmKey}
+                                            geography={geo}
+                                            fill="#e2e8f0"
+                                            stroke="#cbd5e1"
+                                            strokeWidth={0.5}
+                                            style={{
+                                                default: { outline: "none" },
+                                                hover: { fill: "#bfdbfe", outline: "none" },
+                                                pressed: { fill: "#93c5fd", outline: "none" },
+                                            }}
+                                        />
+                                    ))
+                                }
+                            </Geographies>
 
-                        {mapCounts.map(marker => (
-                            <Marker key={marker.id} coordinates={[marker.lng, marker.lat]}>
-                                <g className="map-pin-group" style={{ cursor: 'pointer' }}>
-                                    {/* Pulse Animation (Native SVG) */}
-                                    <circle cx={0} cy={0} r={8} fill="rgba(37, 99, 235, 0.4)">
-                                        <animate attributeName="r" from="4" to="16" dur="2s" repeatCount="indefinite" />
-                                        <animate attributeName="opacity" from="1" to="0" dur="2s" repeatCount="indefinite" />
-                                    </circle>
-                                    {/* Pin Core */}
-                                    <circle cx={0} cy={0} r={4} fill="#2563eb" stroke="#ffffff" strokeWidth={1.5} />
-                                    
-                                    {/* Permanent Text Label Below Pin */}
-                                    <text
-                                        textAnchor="middle"
-                                        y={14}
-                                        style={{ fontFamily: "Inter", fontSize: "10px", fontWeight: 700, fill: "#1e293b", textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
-                                    >
-                                        {marker.name}
-                                    </text>
-                                    <text
-                                        textAnchor="middle"
-                                        y={26}
-                                        style={{ fontFamily: "Inter", fontSize: "12px", fontWeight: 800, fill: "#2563eb", textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
-                                    >
-                                        {marker.count}
-                                    </text>
-                                </g>
-                            </Marker>
-                        ))}
+                            {mapCounts.map(marker => (
+                                <Marker key={marker.id} coordinates={[marker.lng, marker.lat]}>
+                                    <g className="map-pin-group" style={{ cursor: 'pointer' }}>
+                                        {/* Pulse Animation (Native SVG) */}
+                                        <circle cx={0} cy={0} r={8} fill="rgba(37, 99, 235, 0.4)">
+                                            <animate attributeName="r" from="4" to="16" dur="2s" repeatCount="indefinite" />
+                                            <animate attributeName="opacity" from="1" to="0" dur="2s" repeatCount="indefinite" />
+                                        </circle>
+                                        {/* Pin Core */}
+                                        <circle cx={0} cy={0} r={4} fill="#2563eb" stroke="#ffffff" strokeWidth={1.5} />
+                                        
+                                        {/* Permanent Text Label Below Pin */}
+                                        <text
+                                            textAnchor="middle"
+                                            y={14}
+                                            style={{ fontFamily: "Inter", fontSize: "10px", fontWeight: 700, fill: "#1e293b", textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
+                                        >
+                                            {marker.name}
+                                        </text>
+                                        <text
+                                            textAnchor="middle"
+                                            y={26}
+                                            style={{ fontFamily: "Inter", fontSize: "12px", fontWeight: 800, fill: "#2563eb", textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
+                                        >
+                                            {marker.count}
+                                        </text>
+                                    </g>
+                                </Marker>
+                            ))}
+                        </ZoomableGroup>
                     </ComposableMap>
                 </div>
 
