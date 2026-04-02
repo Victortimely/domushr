@@ -1,10 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { generateSurveyPDF } from '../services/pdfService';
 import '../styles/dashboard.css';
+
+// Import our Vector Map GeoJSON
+import indonesiaGeoJson from '../assets/indonesia-provinces.json';
 
 function DonutChart({ surveyed, total, label }) {
     const pct = total > 0 ? Math.round((surveyed / total) * 100) : 0;
@@ -115,31 +119,31 @@ function BarChart({ data }) {
 }
 
 const initialMapData = [
-    { id: 1, name: 'Aceh', top: 18, left: 8, count: 5 },
-    { id: 2, name: 'Sumatera Utara', top: 25, left: 12, count: 12 },
-    { id: 3, name: 'Sumatera Barat', top: 38, left: 15, count: 8 },
-    { id: 4, name: 'Riau', top: 33, left: 18, count: 4 },
-    { id: 5, name: 'Jambi', top: 40, left: 22, count: 6 },
-    { id: 6, name: 'Sumsel', top: 48, left: 25, count: 15 },
-    { id: 7, name: 'Lampung', top: 56, left: 28, count: 10 },
-    { id: 8, name: 'Banten', top: 62, left: 27, count: 8 },
-    { id: 9, name: 'DKI Jakarta', top: 64, left: 30, count: 45 },
-    { id: 10, name: 'Jawa Barat', top: 66, left: 32, count: 32 },
-    { id: 11, name: 'Jawa Tengah', top: 68, left: 36, count: 28 },
-    { id: 12, name: 'Jawa Timur', top: 70, left: 42, count: 35 },
-    { id: 13, name: 'Bali', top: 73, left: 47, count: 12 },
-    { id: 14, name: 'NTB', top: 75, left: 51, count: 4 },
-    { id: 15, name: 'NTT', top: 79, left: 56, count: 3 },
-    { id: 16, name: 'Kalbar', top: 38, left: 38, count: 7 },
-    { id: 17, name: 'Kalteng', top: 46, left: 42, count: 5 },
-    { id: 18, name: 'Kalsel', top: 52, left: 45, count: 8 },
-    { id: 19, name: 'Kaltim', top: 38, left: 48, count: 11 },
-    { id: 20, name: 'Sulsel', top: 56, left: 55, count: 18 },
-    { id: 21, name: 'Sulteng', top: 44, left: 57, count: 5 },
-    { id: 22, name: 'Sulut', top: 33, left: 63, count: 8 },
-    { id: 23, name: 'Maluku', top: 55, left: 70, count: 5 },
-    { id: 24, name: 'Papua Barat', top: 44, left: 80, count: 6 },
-    { id: 25, name: 'Papua', top: 52, left: 90, count: 15 },
+    { id: 1, name: 'Aceh', lat: 4.5, lng: 96.5, count: 5 },
+    { id: 2, name: 'Sumatera Utara', lat: 2.0, lng: 99.0, count: 12 },
+    { id: 3, name: 'Sumatera Barat', lat: -0.5, lng: 100.5, count: 8 },
+    { id: 4, name: 'Riau', lat: 0.5, lng: 101.5, count: 4 },
+    { id: 5, name: 'Jambi', lat: -1.5, lng: 103.5, count: 6 },
+    { id: 6, name: 'Sumsel', lat: -3.0, lng: 104.5, count: 15 },
+    { id: 7, name: 'Lampung', lat: -4.5, lng: 105.0, count: 10 },
+    { id: 8, name: 'Banten', lat: -6.4, lng: 106.1, count: 8 },
+    { id: 9, name: 'DKI Jakarta', lat: -6.2, lng: 106.8, count: 45 },
+    { id: 10, name: 'Jawa Barat', lat: -6.9, lng: 107.5, count: 32 },
+    { id: 11, name: 'Jawa Tengah', lat: -7.3, lng: 110.0, count: 28 },
+    { id: 12, name: 'Jawa Timur', lat: -7.6, lng: 112.5, count: 35 },
+    { id: 13, name: 'Bali', lat: -8.3, lng: 115.0, count: 12 },
+    { id: 14, name: 'NTB', lat: -8.6, lng: 117.5, count: 4 },
+    { id: 15, name: 'NTT', lat: -8.7, lng: 121.0, count: 3 },
+    { id: 16, name: 'Kalbar', lat: -0.5, lng: 111.0, count: 7 },
+    { id: 17, name: 'Kalteng', lat: -1.5, lng: 113.5, count: 5 },
+    { id: 18, name: 'Kalsel', lat: -2.5, lng: 115.5, count: 8 },
+    { id: 19, name: 'Kaltim', lat: 0.5, lng: 116.5, count: 11 },
+    { id: 20, name: 'Sulsel', lat: -4.0, lng: 120.0, count: 18 },
+    { id: 21, name: 'Sulteng', lat: -1.0, lng: 120.5, count: 5 },
+    { id: 22, name: 'Sulut', lat: 1.0, lng: 124.5, count: 8 },
+    { id: 23, name: 'Maluku', lat: -3.0, lng: 129.5, count: 5 },
+    { id: 24, name: 'Papua Barat', lat: -1.5, lng: 132.5, count: 6 },
+    { id: 25, name: 'Papua', lat: -4.0, lng: 139.0, count: 15 },
 ];
 
 export default function DashboardPage() {
@@ -150,12 +154,20 @@ export default function DashboardPage() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [mapCounts, setMapCounts] = useState([]);
-    const [newMarker, setNewMarker] = useState({ name: '', top: 50, left: 50, count: 0 });
+    const [newMarker, setNewMarker] = useState({ name: '', lat: 0, lng: 118, count: 0 });
 
     useEffect(() => {
-        const saved = localStorage.getItem('indonesiaMapData');
-        if (saved) {
-            setMapCounts(JSON.parse(saved));
+        let saved = localStorage.getItem('indonesiaMapData');
+        let parsed = saved ? JSON.parse(saved) : null;
+        
+        // Reset localStorage if we see old 'top' attributes and no 'lng'
+        if (parsed && parsed.length > 0 && parsed[0].lng === undefined) {
+            localStorage.removeItem('indonesiaMapData');
+            parsed = null;
+        }
+
+        if (parsed) {
+            setMapCounts(parsed);
         } else {
             setMapCounts(initialMapData);
         }
@@ -168,16 +180,24 @@ export default function DashboardPage() {
         localStorage.setItem('indonesiaMapData', JSON.stringify(updated));
     };
 
-    const handleAddMarker = () => {
+    const handleAddMarker = (e) => {
+        e.preventDefault();
         if (!newMarker.name) {
             toast.error('Nama lokasi tidak boleh kosong');
             return;
         }
-        const added = [...mapCounts, { id: Date.now(), name: newMarker.name, top: newMarker.top, left: newMarker.left, count: newMarker.count }];
-        setMapCounts(added);
-        localStorage.setItem('indonesiaMapData', JSON.stringify(added));
-        setNewMarker({ name: '', top: 50, left: 50, count: 0 });
-        toast.success('Lokasi berhasil ditambahkan');
+        const marker = {
+            id: Date.now(),
+            name: newMarker.name,
+            lat: parseFloat(newMarker.lat),
+            lng: parseFloat(newMarker.lng),
+            count: parseInt(newMarker.count) || 0
+        };
+        const updated = [...mapCounts, marker];
+        setMapCounts(updated);
+        localStorage.setItem('indonesiaMapData', JSON.stringify(updated));
+        setNewMarker({ name: '', lat: 0, lng: 118, count: 0 });
+        toast.success(`Titik lokasi ${marker.name} ditambahkan`);
     };
 
     const handleDeleteMarker = (id) => {
@@ -384,24 +404,67 @@ export default function DashboardPage() {
                 <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>📍 Peta Sebaran Karyawan</h2>
                 
                 {/* Visual Map Area */}
-                <div style={{ position: 'relative', width: '100%', minHeight: '400px', background: '#ffffff', borderRadius: '16px', overflow: 'hidden' }}>
-                    <img 
-                        src="https://vemaps.com/uploads/img/id-02.png" 
-                        alt="Map" 
-                        style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'fill', filter: 'opacity(0.9)', pointerEvents: 'none' }} 
-                    />
-                    
-                    {mapCounts.map(marker => (
-                        <div key={marker.id} className="map-pin-group" style={{ position: 'absolute', top: `${marker.top}%`, left: `${marker.left}%`, transform: 'translate(-50%, -50%)' }}>
-                            <div className="map-pin"></div>
-                            <div className="map-pin-pulse"></div>
-                            {/* Permanent Text Label Below Pin */}
-                            <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '6px', textAlign: 'center', pointerEvents: 'none', width: '100px' }}>
-                                <div style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textShadow: '0px 0px 4px rgba(255,255,255,0.9)', whiteSpace: 'nowrap' }}>{marker.name}</div>
-                                <div style={{ fontSize: '13px', fontWeight: 800, color: '#2563eb', textShadow: '0px 0px 4px rgba(255,255,255,0.9)' }}>{marker.count}</div>
-                            </div>
-                        </div>
-                    ))}
+                <div style={{ position: 'relative', width: '100%', minHeight: '400px', background: '#ffffff', borderRadius: '16px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ComposableMap
+                        projection="geoMercator"
+                        projectionConfig={{
+                            scale: 1000,
+                            center: [118, -2] // Center roughly on Indonesia
+                        }}
+                        style={{
+                            width: "100%",
+                            height: "auto",
+                        }}
+                    >
+                        <Geographies geography={indonesiaGeoJson}>
+                            {({ geographies }) =>
+                                geographies.map((geo) => (
+                                    <Geography
+                                        key={geo.rsmKey}
+                                        geography={geo}
+                                        fill="#e2e8f0"
+                                        stroke="#cbd5e1"
+                                        strokeWidth={0.5}
+                                        style={{
+                                            default: { outline: "none" },
+                                            hover: { fill: "#bfdbfe", outline: "none" },
+                                            pressed: { fill: "#93c5fd", outline: "none" },
+                                        }}
+                                    />
+                                ))
+                            }
+                        </Geographies>
+
+                        {mapCounts.map(marker => (
+                            <Marker key={marker.id} coordinates={[marker.lng, marker.lat]}>
+                                <g className="map-pin-group" style={{ cursor: 'pointer' }}>
+                                    {/* Pulse Animation (Native SVG) */}
+                                    <circle cx={0} cy={0} r={8} fill="rgba(37, 99, 235, 0.4)">
+                                        <animate attributeName="r" from="4" to="16" dur="2s" repeatCount="indefinite" />
+                                        <animate attributeName="opacity" from="1" to="0" dur="2s" repeatCount="indefinite" />
+                                    </circle>
+                                    {/* Pin Core */}
+                                    <circle cx={0} cy={0} r={4} fill="#2563eb" stroke="#ffffff" strokeWidth={1.5} />
+                                    
+                                    {/* Permanent Text Label Below Pin */}
+                                    <text
+                                        textAnchor="middle"
+                                        y={14}
+                                        style={{ fontFamily: "Inter", fontSize: "10px", fontWeight: 700, fill: "#1e293b", textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
+                                    >
+                                        {marker.name}
+                                    </text>
+                                    <text
+                                        textAnchor="middle"
+                                        y={26}
+                                        style={{ fontFamily: "Inter", fontSize: "12px", fontWeight: 800, fill: "#2563eb", textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
+                                    >
+                                        {marker.count}
+                                    </text>
+                                </g>
+                            </Marker>
+                        ))}
+                    </ComposableMap>
                 </div>
 
                 <hr style={{ border: 'none', borderBottom: '1px solid var(--border)', margin: '24px 0' }} />
@@ -415,7 +478,7 @@ export default function DashboardPage() {
                         <div key={marker.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                 <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{marker.name}</span>
-                                <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>Posisi: X={marker.left}% Y={marker.top}%</span>
+                                <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>Posisi: Lon={marker.lng} Lat={marker.lat}</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <input 
@@ -443,13 +506,13 @@ export default function DashboardPage() {
                         <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Nama Daerah</label>
                         <input className="form-input" style={{ background: 'var(--bg)', padding: '8px 12px' }} placeholder="Cth: Makassar" value={newMarker.name} onChange={(e) => setNewMarker({...newMarker, name: e.target.value})} />
                     </div>
-                    <div style={{ width: '80px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Kiri (X %)</label>
-                        <input className="form-input" type="number" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.left} onChange={(e) => setNewMarker({...newMarker, left: e.target.value})} />
+                    <div style={{ width: '100px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Longitude</label>
+                        <input className="form-input" type="number" step="0.1" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.lng} onChange={(e) => setNewMarker({...newMarker, lng: e.target.value})} />
                     </div>
-                    <div style={{ width: '80px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Atas (Y %)</label>
-                        <input className="form-input" type="number" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.top} onChange={(e) => setNewMarker({...newMarker, top: e.target.value})} />
+                    <div style={{ width: '100px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Latitude</label>
+                        <input className="form-input" type="number" step="0.1" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.lat} onChange={(e) => setNewMarker({...newMarker, lat: e.target.value})} />
                     </div>
                     <div style={{ width: '100px' }}>
                         <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Jml. Karyawan</label>
