@@ -173,12 +173,10 @@ export default function EmployeesPage() {
             
             {/* TOP NAV */}
             <div className="topnav">
-                <div className="logo-mark" style={{ flexShrink: 0 }}>
-                    <div className="logo-icon">📋</div>
-                    <span>Domus<span style={{ color: 'var(--accent)' }}>HR</span></span>
-                </div>
-                <div className="breadcrumb" style={{ whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '12px' }}>
-                    <span className="active-crumb" style={{ fontSize: '15px', color: 'var(--text)' }}>Data Karyawan</span>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                        Data <span style={{ color: 'var(--accent)' }}>Karyawan</span>
+                    </h1>
                 </div>
                 <div className="topnav-right">
                     <button className="btn-add" onClick={openAdd}>
