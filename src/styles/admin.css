@@ -43,18 +43,18 @@
     content: '';
     position: absolute;
     top: 50%;
-    left: 3px;
+    right: 3px;
     transform: translateY(-50%);
     height: 1px;
     width: 220px;
-    background: linear-gradient(to left, rgba(255, 255, 255, 0.85), transparent);
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.85));
 }
 
 @keyframes shoot {
-    0% { transform: rotate(-45deg) translateX(0); opacity: 0; }
+    0% { transform: rotate(135deg) translateX(0); opacity: 0; }
     8% { opacity: 1; }
     85% { opacity: 0.9; }
-    100% { transform: rotate(-45deg) translateX(680px); opacity: 0; }
+    100% { transform: rotate(135deg) translateX(680px); opacity: 0; }
 }
 
 .sp-nav {

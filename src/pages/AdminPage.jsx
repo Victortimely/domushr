@@ -175,9 +175,9 @@ export default function AdminPage() {
             <div id="s3" style={{ boxShadow: s3 }}></div>
 
             <div className="meteor" style={{ top: '6%', left: '78%', animationDuration: '5s', animationDelay: '0s' }}></div>
-            <div class="meteor" style={{ top: '20%', left: '62%', animationDuration: '7.5s', animationDelay: '2s' }}></div>
-            <div class="meteor" style={{ top: '4%', left: '45%', animationDuration: '4.5s', animationDelay: '5s' }}></div>
-            <div class="meteor" style={{ top: '38%', left: '88%', animationDuration: '6s', animationDelay: '1.2s' }}></div>
+            <div className="meteor" style={{ top: '20%', left: '62%', animationDuration: '7.5s', animationDelay: '2s' }}></div>
+            <div className="meteor" style={{ top: '4%', left: '45%', animationDuration: '4.5s', animationDelay: '5s' }}></div>
+            <div className="meteor" style={{ top: '38%', left: '88%', animationDuration: '6s', animationDelay: '1.2s' }}></div>
 
             <div className="sp-nav">
                 <div className="logo-mark">
