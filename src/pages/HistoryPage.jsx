@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import '../styles/history.css';
@@ -17,6 +17,13 @@ export default function HistoryPage() {
         const timer = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
+
+    const lastUpdated = useMemo(() => {
+        if (surveys.length === 0) return null;
+        const dates = surveys.map(s => new Date(s.created_at).getTime()).filter(t => !isNaN(t));
+        if (dates.length === 0) return null;
+        return new Date(Math.max(...dates));
+    }, [surveys]);
 
     async function loadSurveys() {
         try {
@@ -262,7 +269,7 @@ export default function HistoryPage() {
             {/* FOOTER */}
             <div className="list-footer">
                 <span>Menampilkan <strong>{filtered.length}</strong> dari <strong>{surveys.length}</strong> entri</span>
-                <span>Terakhir diperbarui: {time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · <strong>{time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</strong> WIB</span>
+                <span>Terakhir diperbarui: {lastUpdated ? `${lastUpdated.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}` : '-'} · <strong>{lastUpdated ? lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}</strong> WIB</span>
             </div>
         </div>
     );
