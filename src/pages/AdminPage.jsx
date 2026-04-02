@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import '../styles/admin.css';
 
 export default function AdminPage() {
     const { user } = useAuth();
@@ -9,11 +10,12 @@ export default function AdminPage() {
     const [requests, setRequests] = useState([]);
     const [users, setUsers] = useState([]);
     const [regRequests, setRegRequests] = useState([]);
-    const [showResetModal, setShowResetModal] = useState(false);
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [newPassword, setNewPassword] = useState('');
-    const [tab, setTab] = useState('requests');
-    const [deleteTarget, setDeleteTarget] = useState(null);
+
+    const [resetUid, setResetUid] = useState('');
+    const [resetPwd, setResetPwd] = useState('');
+    const [resetConfirm, setResetConfirm] = useState('');
+
+    const [tab, setTab] = useState('overview');
 
     useEffect(() => {
         loadData();
@@ -32,41 +34,11 @@ export default function AdminPage() {
         }
     }
 
-    const openResetModal = (u) => {
-        setSelectedUser(u);
-        setNewPassword('');
-        setShowResetModal(true);
-    };
-
-    const handleReset = async () => {
-        if (!newPassword.trim()) {
-            toast.error('Password baru wajib diisi');
-            return;
-        }
-        if (newPassword.trim().length < 6) {
-            toast.error('Password minimal 6 karakter');
-            return;
-        }
+    const confirmDeleteUser = async (u) => {
+        if (!window.confirm(`Yakin ingin menghapus akun ${u.name}?`)) return;
         try {
-            // Find pending request for this user
-            const pendingReq = requests.find(r => r.user_id === selectedUser.id && r.status === 'pending');
-            if (pendingReq) {
-                await api.post(`/admin/password-resets/${pendingReq.id}/approve`, { newPassword: newPassword.trim() });
-            }
-            toast.success(`Password untuk "${selectedUser.name}" berhasil direset`);
-            setShowResetModal(false);
-            loadData();
-        } catch (err) {
-            toast.error(err.message);
-        }
-    };
-
-    const confirmDeleteUser = async () => {
-        if (!deleteTarget) return;
-        try {
-            await api.delete(`/admin/users/${deleteTarget.id}`);
-            toast.success(`Akun "${deleteTarget.name}" berhasil dihapus`);
-            setDeleteTarget(null);
+            await api.delete(`/admin/users/${u.id}`);
+            toast.success(`Akun "${u.name}" berhasil dihapus`);
             loadData();
         } catch (err) {
             toast.error(err.message);
@@ -76,7 +48,7 @@ export default function AdminPage() {
     const approveRegistration = async (req) => {
         try {
             await api.post(`/admin/registrations/${req.id}/approve`);
-            toast.success(`Akun "${req.name}" berhasil disetujui sebagai Surveyor`);
+            toast.success(`Akun "${req.name}" disetujui`);
             loadData();
         } catch (err) {
             toast.error(err.message);
@@ -93,8 +65,94 @@ export default function AdminPage() {
         }
     };
 
-    const pendingResetCount = requests.filter(r => r.status === 'pending').length;
-    const pendingRegCount = regRequests.filter(r => r.status === 'pending').length;
+    const doReset = async () => {
+        if (!resetUid || !resetPwd || !resetConfirm) {
+            toast.error('Harap isi semua kolom.');
+            return;
+        }
+        if (resetPwd !== resetConfirm) {
+            toast.error('Password tidak cocok.');
+            return;
+        }
+        if (resetPwd.length < 8) {
+            toast.error('Password minimal 8 karakter.');
+            return;
+        }
+        try {
+            // Find user by username
+            const targetUser = users.find(u => u.username === resetUid);
+            if (!targetUser) {
+                toast.error('User ID tidak ditemukan');
+                return;
+            }
+            // Check if there's a pending request
+            const pendingReq = requests.find(r => r.user_id === targetUser.id && r.status === 'pending');
+            if (pendingReq) {
+                await api.post(`/admin/password-resets/${pendingReq.id}/approve`, { newPassword: resetPwd });
+            } else {
+                // If no request, we simulate resetting if backend allowed it, for now show success UI
+                toast.error('Reset manual langsung belum didukung API, gunakan persetujuan Request.');
+                return;
+            }
+            toast.success(`Password untuk User ID ${resetUid} berhasil direset.`);
+            setResetUid(''); setResetPwd(''); setResetConfirm('');
+            loadData();
+        } catch (err) {
+            toast.error(err.message);
+        }
+    };
+
+    const clearPwd = () => {
+        setResetUid(''); setResetPwd(''); setResetConfirm('');
+    };
+
+    const { s1, s2, s3 } = useMemo(() => {
+        let s1Str = '', s2Str = '', s3Str = '';
+        for (let i = 0; i < 200; i++) {
+            const x = Math.floor(Math.random() * 950), y = Math.floor(Math.random() * 780);
+            const op = (Math.random() * 0.4 + 0.15).toFixed(2);
+            s1Str += (i > 0 ? ', ' : '') + `${x}px ${y}px 0 0 rgba(255,255,255,${op})`;
+        }
+        for (let j = 0; j < 55; j++) {
+            const x = Math.floor(Math.random() * 950), y = Math.floor(Math.random() * 780);
+            const op = (Math.random() * 0.5 + 0.2).toFixed(2);
+            s2Str += (j > 0 ? ', ' : '') + `${x}px ${y}px 0 0 rgba(255,255,255,${op})`;
+        }
+        for (let k = 0; k < 18; k++) {
+            const x = Math.floor(Math.random() * 950), y = Math.floor(Math.random() * 780);
+            s3Str += (k > 0 ? ', ' : '') + `${x}px ${y}px 1px 1px rgba(255,255,255,0.7)`;
+        }
+        return { s1: s1Str, s2: s2Str, s3: s3Str };
+    }, []);
+
+    const recentActivities = useMemo(() => {
+        const activities = [];
+        regRequests.forEach(req => {
+            activities.push({
+                id: `reg-${req.id}`,
+                name: req.name,
+                initials: req.name?.[0] || '?',
+                activity: 'Pembuatan Akun (' + (req.status === 'pending' ? 'Pending' : req.status === 'approved' ? 'Disetujui' : 'Ditolak') + ')',
+                time: new Date(req.createdAt).toLocaleString('id-ID'),
+                status: req.status === 'approved' ? 'b-approved' : req.status === 'rejected' ? 'b-rejected' : 'b-pending',
+                statusLabel: req.status === 'approved' ? 'Berhasil' : req.status === 'rejected' ? 'Ditolak' : 'Menunggu',
+                timestamp: new Date(req.createdAt).getTime()
+            });
+        });
+        requests.forEach(req => {
+            activities.push({
+                id: `pwd-${req.id}`,
+                name: req.userName || 'User',
+                initials: req.userName?.[0] || '?',
+                activity: 'Reset Password',
+                time: new Date(req.createdAt).toLocaleString('id-ID'),
+                status: req.status === 'resolved' ? 'b-approved' : 'b-pending',
+                statusLabel: req.status === 'resolved' ? 'Berhasil' : 'Menunggu',
+                timestamp: new Date(req.createdAt).getTime()
+            });
+        });
+        return activities.sort((a,b) => b.timestamp - a.timestamp).slice(0, 5);
+    }, [regRequests, requests]);
 
     if (user?.role !== 'master') {
         return (
@@ -106,215 +164,315 @@ export default function AdminPage() {
         );
     }
 
+    const pendingResetCount = requests.filter(r => r.status === 'pending').length;
+    const pendingRegCount = regRequests.filter(r => r.status === 'pending').length;
+    const activeUsers = users.length; // all non-master users we fetched are active for now
+
     return (
-        <div>
-            <div className="page-header">
-                <h1 className="page-title">🛡️ Panel Admin Master</h1>
-                <p className="page-subtitle">Kelola akun pengguna, reset password & permintaan registrasi</p>
+        <div className="admin-universe">
+            <div id="s1" style={{ boxShadow: s1 }}></div>
+            <div id="s2" style={{ boxShadow: s2 }}></div>
+            <div id="s3" style={{ boxShadow: s3 }}></div>
+
+            <div className="meteor" style={{ top: '6%', left: '78%', animationDuration: '5s', animationDelay: '0s' }}></div>
+            <div class="meteor" style={{ top: '20%', left: '62%', animationDuration: '7.5s', animationDelay: '2s' }}></div>
+            <div class="meteor" style={{ top: '4%', left: '45%', animationDuration: '4.5s', animationDelay: '5s' }}></div>
+            <div class="meteor" style={{ top: '38%', left: '88%', animationDuration: '6s', animationDelay: '1.2s' }}></div>
+
+            <div className="sp-nav">
+                <div className="logo-mark">
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 1.5L2.5 4v4.5C2.5 11.5 5 14 8 15c3-1 5.5-3.5 5.5-6.5V4L8 1.5z" fill="#ffffff" opacity=".95"/>
+                        <path d="M5.5 8.5L7 10l3.5-3.5" stroke="var(--purple, #8b5cf6)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                </div>
+                <div className="logo-info">
+                    <div className="logo-name">Admin Master</div>
+                    <div className="logo-sub">PANEL</div>
+                </div>
+                <div className="sp-nav-items">
+                    <button className={`sp-nav-item ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>Ringkasan</button>
+                    <button className={`sp-nav-item ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>List User ID</button>
+                    <button className={`sp-nav-item ${tab === 'password' ? 'active' : ''}`} onClick={() => setTab('password')}>
+                        Ganti Password {pendingResetCount > 0 && <span className="badge b-pending" style={{marginLeft: 6}}>{pendingResetCount}</span>}
+                    </button>
+                    <button className={`sp-nav-item ${tab === 'requests' ? 'active' : ''}`} onClick={() => setTab('requests')}>
+                        Permintaan Akun {pendingRegCount > 0 && <span className="badge b-pending" style={{marginLeft: 6}}>{pendingRegCount}</span>}
+                    </button>
+                </div>
+                <div className="adm-right">
+                    <div className="sp-avatar">SA</div>
+                </div>
             </div>
 
-            {/* Tabs */}
-            <div className="nav-tabs" style={{ marginBottom: 20 }}>
-                <button className={`nav-tab ${tab === 'requests' ? 'active' : ''}`} onClick={() => setTab('requests')}>
-                    📨 Reset Password {pendingResetCount > 0 && <span className="badge badge-draft" style={{ marginLeft: 6 }}>{pendingResetCount}</span>}
-                </button>
-                <button className={`nav-tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>
-                    👥 List User
-                </button>
-                <button className={`nav-tab ${tab === 'register' ? 'active' : ''}`} onClick={() => setTab('register')}>
-                    📝 Permintaan Register {pendingRegCount > 0 && <span className="badge badge-draft" style={{ marginLeft: 6 }}>{pendingRegCount}</span>}
-                </button>
+            <div className="sp-body">
+                {/* RINGKASAN SECTION */}
+                {tab === 'overview' && (
+                    <div className="section active">
+                        <div className="sp-page-hdr">
+                            <h2>Ringkasan Sistem</h2>
+                            <p>Pantau status dan aktivitas user secara keseluruhan.</p>
+                        </div>
+                        <div className="sp-stats-row">
+                            <div className="sp-stat-card">
+                                <div className="sp-stat-lbl">Total User Aktif</div>
+                                <div className="sp-stat-val">{activeUsers}</div>
+                                <div className="sp-stat-note">User terdaftar</div>
+                            </div>
+                            <div className="sp-stat-card">
+                                <div className="sp-stat-lbl">Permintaan Pending</div>
+                                <div className="sp-stat-val">{pendingRegCount + pendingResetCount}</div>
+                                <div className="sp-stat-note warn">Perlu ditinjau</div>
+                            </div>
+                            <div className="sp-stat-card">
+                                <div className="sp-stat-lbl">Password Requests</div>
+                                <div className="sp-stat-val">{pendingResetCount}</div>
+                                <div className="sp-stat-note">Menunggu reset</div>
+                            </div>
+                        </div>
+                        <div className="sp-tbl-wrap">
+                            <div className="sp-tbl-head">
+                                <span className="sp-tbl-title">Aktivitas Terkini</span>
+                                <span className="sp-tbl-meta">{recentActivities.length} entri</span>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>USER</th>
+                                        <th>AKTIVITAS</th>
+                                        <th>WAKTU</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {recentActivities.length === 0 ? (
+                                        <tr><td colSpan="4">Belum ada aktivitas tercatat</td></tr>
+                                    ) : (
+                                        recentActivities.map(act => (
+                                            <tr key={act.id}>
+                                                <td>
+                                                    <div className="uid-cell">
+                                                        <div className="uid-av" style={{ background: 'var(--purple)', color: '#fff', border: 'none' }}>{act.initials}</div>
+                                                        {act.name}
+                                                    </div>
+                                                </td>
+                                                <td>{act.activity}</td>
+                                                <td style={{ color: 'rgba(255,255,255,.5)' }}>{act.time}</td>
+                                                <td><span className={`sp-badge ${act.status}`}>{act.statusLabel}</span></td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* LIST USER ID */}
+                {tab === 'users' && (
+                    <div className="section active">
+                        <div className="sp-page-hdr">
+                            <h2>List User ID</h2>
+                            <p>Kelola semua akun pengguna yang terdaftar dalam sistem.</p>
+                        </div>
+                        <div className="sp-tbl-wrap">
+                            <div className="sp-tbl-head">
+                                <span className="sp-tbl-title">Semua Pengguna</span>
+                                <span className="sp-tbl-meta">{users.length} user</span>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>NO</th>
+                                        <th>ROLE / USERNAME</th>
+                                        <th>NAMA LENGKAP</th>
+                                        <th>STATUS</th>
+                                        <th>AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {users.length === 0 ? (
+                                        <tr><td colSpan="5">Belum ada pengguna teregistrasi</td></tr>
+                                    ) : (
+                                        users.map((u, i) => (
+                                            <tr key={u.id}>
+                                                <td style={{ color: 'rgba(255,255,255,.5)' }}>{i + 1}</td>
+                                                <td>
+                                                    <div className="uid-code" style={{ marginBottom: 4 }}>{u.username}</div>
+                                                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,.4)' }}>{u.role.toUpperCase()}</div>
+                                                </td>
+                                                <td>
+                                                    <div className="uid-cell">
+                                                        <div className="uid-av">{u.name?.[0] || '?'}</div>
+                                                        {u.name}
+                                                    </div>
+                                                </td>
+                                                <td><span className="sp-badge b-active">Aktif</span></td>
+                                                <td>
+                                                    <button className="ab ar" onClick={() => confirmDeleteUser(u)}>Hapus</button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* GANTI PASSWORD (PASSWORD RESET REQUESTS & MANUAL) */}
+                {tab === 'password' && (
+                    <div className="section active">
+                        <div className="sp-page-hdr">
+                            <h2>Ganti Password User</h2>
+                            <p>Tinjau permintaan reset password dari user atau eksekusi reset manual.</p>
+                        </div>
+
+                        {/* Requests Table */}
+                        <div className="sp-tbl-wrap" style={{ marginBottom: '2rem' }}>
+                            <div className="sp-tbl-head">
+                                <span className="sp-tbl-title">Permintaan Reset Password</span>
+                                <span className="sp-tbl-meta">{pendingResetCount} pending</span>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>USER</th>
+                                        <th>WAKTU REQUEST</th>
+                                        <th>STATUS</th>
+                                        <th>AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {requests.length === 0 ? (
+                                        <tr><td colSpan="4">Tidak ada permintaan reset tertunda</td></tr>
+                                    ) : (
+                                        requests.map(req => (
+                                            <tr key={req.id}>
+                                                <td>
+                                                    <div className="uid-cell">
+                                                        <div className="uid-av" style={req.status === 'pending' ? { background: 'var(--amber)', color: '#fff' } : {}}>{req.userName?.[0] || '?'}</div>
+                                                        {req.userName} ({req.username})
+                                                    </div>
+                                                </td>
+                                                <td style={{ color: 'rgba(255,255,255,.5)' }}>{new Date(req.createdAt).toLocaleString('id-ID')}</td>
+                                                <td>
+                                                    <span className={`sp-badge ${req.status === 'pending' ? 'b-pending' : 'b-approved'}`}>
+                                                        {req.status === 'pending' ? 'Menunggu' : 'Resolved'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {req.status === 'pending' && (
+                                                        <button className="ab ap" onClick={() => setResetUid(req.username)}>Proses ID Ini</button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Reset Form */}
+                        <div className="sp-form-grid">
+                            <div className="sp-form-card">
+                                <h3>Eksekusi Reset Password</h3>
+                                <div className="fg">
+                                    <label className="fl">Username (User ID)</label>
+                                    <input className="sp-input" type="text" placeholder="Masukkan ID yang akan direset" value={resetUid} onChange={e => setResetUid(e.target.value)} />
+                                </div>
+                                <div className="fg">
+                                    <label className="fl">Password Baru</label>
+                                    <input className="sp-input" type="password" placeholder="Minimal 8 karakter" value={resetPwd} onChange={e => setResetPwd(e.target.value)} />
+                                </div>
+                                <div className="fg">
+                                    <label className="fl">Konfirmasi Password</label>
+                                    <input className="sp-input" type="password" placeholder="Ulangi password baru" value={resetConfirm} onChange={e => setResetConfirm(e.target.value)} />
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '1.5rem' }}>
+                                    <button className="sp-btn-primary" onClick={doReset}>Reset Password</button>
+                                    <button className="sp-btn-sec" onClick={clearPwd}>Batal</button>
+                                </div>
+                            </div>
+                            <div className="sp-form-card">
+                                <h3>Panduan Keamanan</h3>
+                                <div className="guide-item">
+                                    <span className="guide-num">01</span>
+                                    <span className="guide-text">Isi User ID sesuai dengan tabel permintaan di atas, dan setujui penggantian password.</span>
+                                </div>
+                                <div className="guide-item">
+                                    <span className="guide-num">02</span>
+                                    <span className="guide-text">Gunakan minimal 8 karakter. Hindari pola umum seperti 12345678.</span>
+                                </div>
+                                <div className="guide-item">
+                                    <span className="guide-num">03</span>
+                                    <span className="guide-text">User akan menggunakan password baru ini untuk login berikutnya.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* PERMINTAAN AKUN */}
+                {tab === 'requests' && (
+                    <div className="section active">
+                        <div className="sp-page-hdr">
+                            <h2>Permintaan Buat Akun</h2>
+                            <p>Tinjau dan putuskan permintaan pembuatan akun dari pengguna baru.</p>
+                        </div>
+                        <div className="sp-tbl-wrap">
+                            <div className="sp-tbl-head">
+                                <span className="sp-tbl-title">Daftar Permintaan</span>
+                                <span className="sp-badge b-pending">{pendingRegCount} pending</span>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>NAMA</th>
+                                        <th>USERNAME</th>
+                                        <th>TANGGAL PENGUMPULAN</th>
+                                        <th>STATUS</th>
+                                        <th>AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {regRequests.length === 0 ? (
+                                        <tr><td colSpan="5">Belum ada permintaan registrasi baru</td></tr>
+                                    ) : (
+                                        regRequests.map(req => (
+                                            <tr key={req.id}>
+                                                <td>
+                                                    <div className="uid-cell">
+                                                        <div className="uid-av" style={req.status === 'pending' ? { background: 'var(--amber)', color: '#fff' } : req.status === 'rejected' ? { background: 'var(--danger)', color: '#fff'} : { background: 'var(--success)', color: '#fff' }}>{req.name?.[0] || '?'}</div>
+                                                        {req.name}
+                                                    </div>
+                                                </td>
+                                                <td style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>{req.username}</td>
+                                                <td style={{ color: 'rgba(255,255,255,.5)' }}>{new Date(req.createdAt).toLocaleString('id-ID')}</td>
+                                                <td>
+                                                    <span className={`sp-badge ${req.status === 'pending' ? 'b-pending' : req.status === 'approved' ? 'b-approved' : 'b-rejected'}`}>
+                                                        {req.status === 'pending' ? 'Menunggu' : req.status === 'approved' ? 'Disetujui' : 'Ditolak'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {req.status === 'pending' ? (
+                                                        <>
+                                                            <button className="ab ap" onClick={() => approveRegistration(req)}>Setujui</button>
+                                                            <button className="ab ar" onClick={() => rejectRegistration(req)}>Tolak</button>
+                                                        </>
+                                                    ) : (
+                                                        <span style={{ fontSize: 12, color: 'rgba(255,255,255,.4)' }}>Selesai diproses</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
-
-            {/* Tab: Password Reset Requests */}
-            {tab === 'requests' && (
-                <div>
-                    {requests.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state-icon">📭</div>
-                            <div className="empty-state-title">Tidak Ada Permintaan</div>
-                            <p>Belum ada permintaan reset password</p>
-                        </div>
-                    ) : (
-                        <div className="survey-list">
-                            {requests.map(req => (
-                                <div key={req.id} className="survey-item" style={{ cursor: 'default' }}>
-                                    <div className="survey-item-avatar" style={{
-                                        background: req.status === 'pending' ? 'var(--gradient-3)' : 'var(--gradient-2)'
-                                    }}>
-                                        {req.status === 'pending' ? '⏳' : '✅'}
-                                    </div>
-                                    <div className="survey-item-info">
-                                        <div className="survey-item-name">{req.userName}</div>
-                                        <div className="survey-item-meta">
-                                            <span>👤 {req.username}</span>
-                                            <span>📅 {new Date(req.createdAt).toLocaleDateString('id-ID')}</span>
-                                            <span>🕐 {new Date(req.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-                                        <span className={`badge ${req.status === 'pending' ? 'badge-draft' : 'badge-verified'}`}>
-                                            {req.status === 'pending' ? '⏳ Pending' : '✅ Resolved'}
-                                        </span>
-                                        {req.status === 'pending' && (
-                                            <button
-                                                className="btn btn-primary btn-sm"
-                                                onClick={() => {
-                                                    const u = users.find(u => u.id === req.userId);
-                                                    if (u) openResetModal(u);
-                                                    else toast.error('User tidak ditemukan');
-                                                }}
-                                            >
-                                                🔑 Reset
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Tab: All Users */}
-            {tab === 'users' && (
-                <div className="survey-list">
-                    {users.map(u => (
-                        <div key={u.id} className="survey-item" style={{ cursor: 'default' }}>
-                            <div className="survey-item-avatar" style={{ background: 'var(--gradient-1)' }}>
-                                {u.name?.[0] || '?'}
-                            </div>
-                            <div className="survey-item-info">
-                                <div className="survey-item-name">{u.name}</div>
-                                <div className="survey-item-meta">
-                                    <span>👤 {u.username}</span>
-                                    <span>🏷️ {u.role}</span>
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                                <button className="btn btn-secondary btn-sm" onClick={() => openResetModal(u)}>
-                                    🔑 Reset Password
-                                </button>
-                                <button
-                                    className="btn btn-ghost btn-sm"
-                                    onClick={() => setDeleteTarget(u)}
-                                    title="Hapus Akun"
-                                    style={{ color: 'var(--danger)' }}
-                                    id={`delete-user-${u.id}`}
-                                >
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Tab: Registration Requests */}
-            {tab === 'register' && (
-                <div>
-                    {regRequests.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state-icon">📭</div>
-                            <div className="empty-state-title">Tidak Ada Permintaan</div>
-                            <p>Belum ada permintaan registrasi baru</p>
-                        </div>
-                    ) : (
-                        <div className="survey-list">
-                            {regRequests.map(req => (
-                                <div key={req.id} className="survey-item" style={{ cursor: 'default' }}>
-                                    <div className="survey-item-avatar" style={{
-                                        background: req.status === 'pending' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : req.status === 'approved' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)'
-                                    }}>
-                                        {req.status === 'pending' ? '⏳' : req.status === 'approved' ? '✅' : '❌'}
-                                    </div>
-                                    <div className="survey-item-info">
-                                        <div className="survey-item-name">{req.name}</div>
-                                        <div className="survey-item-meta">
-                                            <span>👤 {req.username}</span>
-                                            <span>📅 {new Date(req.createdAt).toLocaleDateString('id-ID')}</span>
-                                            <span>🕐 {new Date(req.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-                                        {req.status === 'pending' ? (
-                                            <>
-                                                <button className="btn btn-success btn-sm" onClick={() => approveRegistration(req)}>
-                                                    ✅ Setujui
-                                                </button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => rejectRegistration(req)}>
-                                                    ❌ Tolak
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <span className={`badge ${req.status === 'approved' ? 'badge-verified' : 'badge-draft'}`} style={req.status === 'rejected' ? { background: 'rgba(239,68,68,0.15)', color: '#ef4444' } : {}}>
-                                                {req.status === 'approved' ? '✅ Disetujui' : '❌ Ditolak'}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Reset Password Modal */}
-            {showResetModal && selectedUser && (
-                <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
-                        <h3 style={{ marginBottom: 16 }}>🔑 Reset Password</h3>
-                        <div style={{ padding: 12, background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', marginBottom: 16 }}>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>User:</div>
-                            <div style={{ fontWeight: 600 }}>{selectedUser.name} ({selectedUser.username})</div>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Password Baru <span className="required">*</span></label>
-                            <input
-                                className="form-input"
-                                type="password"
-                                placeholder="Masukkan password baru (min. 5 karakter)"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                autoFocus
-                            />
-                        </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" onClick={() => setShowResetModal(false)} style={{ flex: 1 }}>Batal</button>
-                            <button className="btn btn-primary" onClick={handleReset} style={{ flex: 1 }}>✅ Reset Password</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete User Confirmation Modal */}
-            {deleteTarget && (
-                <div className="modal-overlay" onClick={() => setDeleteTarget(null)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
-                        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                            <div style={{ fontSize: '3rem', marginBottom: 16 }}>⚠️</div>
-                            <h3 style={{ marginBottom: 8 }}>Hapus Akun User?</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 8 }}>
-                                Apakah Anda yakin ingin menghapus akun:
-                            </p>
-                            <div style={{ padding: 12, background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', marginBottom: 20 }}>
-                                <div style={{ fontWeight: 700 }}>{deleteTarget.name}</div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Username: {deleteTarget.username}</div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Role: {deleteTarget.role}</div>
-                            </div>
-                            <p style={{ color: 'var(--danger)', fontSize: '0.8rem', marginBottom: 20 }}>
-                                ⚠ Tindakan ini tidak bisa dibatalkan!
-                            </p>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                <button className="btn btn-secondary" onClick={() => setDeleteTarget(null)} style={{ flex: 1 }}>Batal</button>
-                                <button className="btn btn-danger" onClick={confirmDeleteUser} style={{ flex: 1 }} id="confirm-delete-user-btn">
-                                    🗑️ Ya, Hapus Akun
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
