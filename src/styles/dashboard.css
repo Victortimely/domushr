@@ -258,3 +258,91 @@
 .dashboard-v2 .stats-row .stat-card:nth-child(1) { animation: fadeUp 0.5s 0.2s ease both; }
 .dashboard-v2 .stats-row .stat-card:nth-child(2) { animation: fadeUp 0.5s 0.3s ease both; }
 .dashboard-v2 .stats-row .stat-card:nth-child(3) { animation: fadeUp 0.5s 0.4s ease both; }
+
+/* ── Vector Map ── */
+.dashboard-v2 .map-pin-group {
+    cursor: pointer;
+    z-index: 10;
+}
+.dashboard-v2 .map-pin-group:hover {
+    z-index: 20;
+}
+.dashboard-v2 .map-pin {
+    width: 14px;
+    height: 14px;
+    background: var(--purple, #8b5cf6);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2px solid white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    transition: all 0.3s ease;
+}
+.dashboard-v2 .map-pin-group:hover .map-pin {
+    background: #3d8ef8;
+    transform: rotate(-45deg) scale(1.2);
+    border-color: #3d8ef8;
+}
+.dashboard-v2 .map-pin-pulse {
+    position: absolute;
+    width: 30px; height: 30px;
+    background: rgba(139, 92, 246, 0.4);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    animation: mapPulse 2s infinite;
+}
+.dashboard-v2 .map-pin-group:hover .map-pin-pulse {
+    background: rgba(61, 142, 248, 0.4);
+}
+@keyframes mapPulse {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+.dashboard-v2 .map-tooltip {
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, bottom 0.3s ease;
+    min-width: 100px;
+}
+.dashboard-v2 .map-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: var(--surface2) transparent transparent transparent;
+}
+.dashboard-v2 .map-pin-group:hover .map-tooltip {
+    opacity: 1;
+    bottom: 140%;
+}
+.dashboard-v2 .map-tooltip-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
+.dashboard-v2 .map-tooltip-val {
+    font-size: 16px;
+    font-weight: 800;
+    color: #3d8ef8;
+}
+.dashboard-v2 .map-tooltip-val span {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-dim);
+}

@@ -114,6 +114,34 @@ function BarChart({ data }) {
     );
 }
 
+const initialMapData = [
+    { id: 1, name: 'Aceh', top: 18, left: 8, count: 5 },
+    { id: 2, name: 'Sumatera Utara', top: 25, left: 12, count: 12 },
+    { id: 3, name: 'Sumatera Barat', top: 38, left: 15, count: 8 },
+    { id: 4, name: 'Riau', top: 33, left: 18, count: 4 },
+    { id: 5, name: 'Jambi', top: 40, left: 22, count: 6 },
+    { id: 6, name: 'Sumsel', top: 48, left: 25, count: 15 },
+    { id: 7, name: 'Lampung', top: 56, left: 28, count: 10 },
+    { id: 8, name: 'Banten', top: 62, left: 27, count: 8 },
+    { id: 9, name: 'DKI Jakarta', top: 64, left: 30, count: 45 },
+    { id: 10, name: 'Jawa Barat', top: 66, left: 32, count: 32 },
+    { id: 11, name: 'Jawa Tengah', top: 68, left: 36, count: 28 },
+    { id: 12, name: 'Jawa Timur', top: 70, left: 42, count: 35 },
+    { id: 13, name: 'Bali', top: 73, left: 47, count: 12 },
+    { id: 14, name: 'NTB', top: 75, left: 51, count: 4 },
+    { id: 15, name: 'NTT', top: 79, left: 56, count: 3 },
+    { id: 16, name: 'Kalbar', top: 38, left: 38, count: 7 },
+    { id: 17, name: 'Kalteng', top: 46, left: 42, count: 5 },
+    { id: 18, name: 'Kalsel', top: 52, left: 45, count: 8 },
+    { id: 19, name: 'Kaltim', top: 38, left: 48, count: 11 },
+    { id: 20, name: 'Sulsel', top: 56, left: 55, count: 18 },
+    { id: 21, name: 'Sulteng', top: 44, left: 57, count: 5 },
+    { id: 22, name: 'Sulut', top: 33, left: 63, count: 8 },
+    { id: 23, name: 'Maluku', top: 55, left: 70, count: 5 },
+    { id: 24, name: 'Papua Barat', top: 44, left: 80, count: 6 },
+    { id: 25, name: 'Papua', top: 52, left: 90, count: 15 },
+];
+
 export default function DashboardPage() {
     const { user } = useAuth();
     const toast = useToast();
@@ -121,10 +149,23 @@ export default function DashboardPage() {
     const [employees, setEmployees] = useState([]);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [mapCounts, setMapCounts] = useState([]);
 
     useEffect(() => {
+        const saved = localStorage.getItem('indonesiaMapData');
+        if (saved) {
+            setMapCounts(JSON.parse(saved));
+        } else {
+            setMapCounts(initialMapData);
+        }
         loadData();
     }, []);
+
+    const updateMapCount = (id, newCount) => {
+        const updated = mapCounts.map(m => m.id === id ? { ...m, count: newCount } : m);
+        setMapCounts(updated);
+        localStorage.setItem('indonesiaMapData', JSON.stringify(updated));
+    };
 
     async function loadData() {
         try {
@@ -315,6 +356,42 @@ export default function DashboardPage() {
                     <div className="stat-icon">🎯</div>
                     <div className="stat-val" style={{color:'#a78bfa'}}>{autoTotal}</div>
                     <div className="stat-lbl">Target Karyawan</div>
+                </div>
+            </div>
+
+            {/* Vector Map Section */}
+            <div className="grid">
+                <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>📍 Peta Sebaran Karyawan</h2>
+                    <div style={{ flex: 1, position: 'relative', width: '100%', minHeight: '300px', background: 'url("https://vemaps.com/uploads/img/id-02.png") center/100% 100% no-repeat' }}>
+                        {mapCounts.map(marker => (
+                            <div key={marker.id} className="map-pin-group" style={{ position: 'absolute', top: `${marker.top}%`, left: `${marker.left}%`, transform: 'translate(-50%, -100%)' }}>
+                                <div className="map-pin"></div>
+                                <div className="map-pin-pulse"></div>
+                                <div className="map-tooltip">
+                                    <div className="map-tooltip-title">{marker.name}</div>
+                                    <div className="map-tooltip-val">{marker.count} <span>karyawan</span></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                
+                <div className="card" style={{ display: 'flex', flexDirection: 'column', maxHeight: '420px' }}>
+                    <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>✏️ Edit Peta Sekitar</h2>
+                    <div style={{ overflowY: 'auto', flex: 1, paddingRight: '12px' }}>
+                        {mapCounts.map(marker => (
+                            <div key={marker.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: 'var(--surface2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                                <span style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>{marker.name}</span>
+                                <input 
+                                    type="number" 
+                                    value={marker.count} 
+                                    onChange={(e) => updateMapCount(marker.id, parseInt(e.target.value) || 0)}
+                                    style={{ width: '56px', background: 'var(--bg)', border: '1px solid var(--purple)', color: 'var(--accent)', padding: '6px', borderRadius: '6px', textAlign: 'center', fontWeight: 'bold' }}
+                                />
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
