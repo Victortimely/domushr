@@ -384,11 +384,11 @@ export default function DashboardPage() {
                 <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>📍 Peta Sebaran Karyawan</h2>
                 
                 {/* Visual Map Area */}
-                <div style={{ position: 'relative', width: '100%', minHeight: '400px', background: 'var(--surface2)', borderRadius: '16px', overflow: 'hidden' }}>
+                <div style={{ position: 'relative', width: '100%', minHeight: '400px', background: '#ffffff', borderRadius: '16px', overflow: 'hidden' }}>
                     <img 
                         src="https://vemaps.com/uploads/img/id-02.png" 
                         alt="Map" 
-                        style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'fill', filter: 'brightness(2.2) contrast(1.1) sepia(0.3) hue-rotate(180deg) opacity(0.8)', pointerEvents: 'none' }} 
+                        style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'fill', filter: 'opacity(0.9)', pointerEvents: 'none' }} 
                     />
                     
                     {mapCounts.map(marker => (
@@ -397,8 +397,8 @@ export default function DashboardPage() {
                             <div className="map-pin-pulse"></div>
                             {/* Permanent Text Label Below Pin */}
                             <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '6px', textAlign: 'center', pointerEvents: 'none', width: '100px' }}>
-                                <div style={{ fontSize: '10px', fontWeight: 600, color: '#f1f5f9', textShadow: '0px 1px 3px rgba(0,0,0,0.9), 0px 0px 2px rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{marker.name}</div>
-                                <div style={{ fontSize: '12px', fontWeight: 800, color: '#10d9b4', textShadow: '0px 1px 3px rgba(0,0,0,0.9)' }}>{marker.count}</div>
+                                <div style={{ fontSize: '10px', fontWeight: 700, color: '#1e293b', textShadow: '0px 0px 4px rgba(255,255,255,0.9)', whiteSpace: 'nowrap' }}>{marker.name}</div>
+                                <div style={{ fontSize: '13px', fontWeight: 800, color: '#2563eb', textShadow: '0px 0px 4px rgba(255,255,255,0.9)' }}>{marker.count}</div>
                             </div>
                         </div>
                     ))}
