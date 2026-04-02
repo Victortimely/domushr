@@ -155,6 +155,7 @@ export default function DashboardPage() {
     const [endDate, setEndDate] = useState('');
     const [mapCounts, setMapCounts] = useState([]);
     const [newMarker, setNewMarker] = useState({ name: '', lat: 0, lng: 118, count: 0 });
+    const [mapZoom, setMapZoom] = useState(1);
 
     useEffect(() => {
         let saved = localStorage.getItem('indonesiaMapData');
@@ -416,7 +417,12 @@ export default function DashboardPage() {
                             height: "auto",
                         }}
                     >
-                        <ZoomableGroup zoom={1} maxZoom={10} minZoom={1}>
+                        <ZoomableGroup 
+                            zoom={1} 
+                            maxZoom={10} 
+                            minZoom={1} 
+                            onMove={({ zoom }) => setMapZoom(zoom)}
+                        >
                             <Geographies geography={indonesiaGeoJson}>
                                 {({ geographies }) =>
                                     geographies.map((geo) => (
@@ -438,7 +444,7 @@ export default function DashboardPage() {
 
                             {mapCounts.map(marker => (
                                 <Marker key={marker.id} coordinates={[marker.lng, marker.lat]}>
-                                    <g className="map-pin-group" style={{ cursor: 'pointer' }}>
+                                    <g className="map-pin-group" transform={`scale(${1 / mapZoom})`} style={{ cursor: 'pointer' }}>
                                         {/* Pulse Animation (Native SVG) */}
                                         <circle cx={0} cy={0} r={8} fill="rgba(37, 99, 235, 0.4)">
                                             <animate attributeName="r" from="4" to="16" dur="2s" repeatCount="indefinite" />
