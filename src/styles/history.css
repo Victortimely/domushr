@@ -431,22 +431,23 @@
 }
 
 .history-container .verify-btn-sm {
-  background: var(--accent);
-  color: #fff;
-  border: none;
+  background: rgba(61, 142, 248, 0.1);
+  color: #3d8ef8;
+  border: 1px solid rgba(61, 142, 248, 0.2);
   border-radius: 8px;
-  padding: 6px 14px;
+  padding: 5px 12px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
 .history-container .verify-btn-sm:hover {
-  background: var(--accent-hover);
+  background: rgba(61, 142, 248, 0.2);
+  border-color: rgba(61, 142, 248, 0.4);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px var(--accent-glow);
 }
 
 .history-container .verify-btn-sm:active {
@@ -454,29 +455,40 @@
 }
 
 .history-container .verify-all-btn {
-  display: flex; align-items: center; gap: 7px;
-  background: var(--accent);
-  border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 11px 18px;
-  color: #fff;
+  padding: 10px 20px;
+  color: #3d8ef8;
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 15px var(--accent-glow);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   margin-left: auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.history-container .verify-all-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3d8ef8, transparent);
 }
 
 .history-container .verify-all-btn:hover {
-  background: var(--accent-hover);
+  border-color: rgba(61,142,248,0.4);
+  background: rgba(61,142,248,0.04);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px var(--accent-glow);
 }
 
 .history-container .verify-all-btn svg {
-  width: 15px; height: 15px;
+  width: 16px; height: 16px;
+  color: #3d8ef8;
 }
 
 .history-container .status-badge {
