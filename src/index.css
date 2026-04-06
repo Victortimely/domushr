@@ -269,9 +269,29 @@ body::before {
     box-shadow: var(--shadow-xl);
   }
   .sidebar.collapsed {
-    width: 0;
+    width: 64px;
     padding: 0;
-    border: none;
+    border-right: 1px solid var(--border);
+  }
+  .sidebar.collapsed .sidebar-header {
+    padding: 12px 0;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+  }
+  .sidebar.collapsed .sidebar-logo .logo-text {
+    display: none;
+  }
+  .sidebar.collapsed .sidebar-toggle {
+    margin: 0 auto;
+  }
+  .sidebar.collapsed .sidebar-nav-item {
+    justify-content: center;
+    padding: 12px 0;
+  }
+  .sidebar.collapsed .sidebar-status {
+    justify-content: center;
+    padding: 8px 0;
   }
   .app-layout.has-sidebar .app-main {
     margin-left: 0;
