@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { securityHeaders, corsMiddleware, generalLimiter } from './middleware/security.js';
+import { securityHeaders, corsMiddleware, generalLimiter, authLimiter } from './middleware/security.js';
 import { authenticateToken } from './middleware/auth.js';
 import db from './database.js';
 import authRoutes from './routes/auth.js';
