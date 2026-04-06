@@ -133,10 +133,10 @@ export default function AdminPage() {
                 name: req.name,
                 initials: req.name?.[0] || '?',
                 activity: 'Pembuatan Akun (' + (req.status === 'pending' ? 'Pending' : req.status === 'approved' ? 'Disetujui' : 'Ditolak') + ')',
-                time: new Date(req.createdAt).toLocaleString('id-ID'),
+                time: req.created_at ? new Date(req.created_at).toLocaleString('id-ID') : 'Baru saja',
                 status: req.status === 'approved' ? 'b-approved' : req.status === 'rejected' ? 'b-rejected' : 'b-pending',
                 statusLabel: req.status === 'approved' ? 'Berhasil' : req.status === 'rejected' ? 'Ditolak' : 'Menunggu',
-                timestamp: new Date(req.createdAt).getTime()
+                timestamp: req.created_at ? new Date(req.created_at).getTime() : Date.now()
             });
         });
         requests.forEach(req => {
@@ -145,10 +145,10 @@ export default function AdminPage() {
                 name: req.userName || 'User',
                 initials: req.userName?.[0] || '?',
                 activity: 'Reset Password',
-                time: new Date(req.createdAt).toLocaleString('id-ID'),
+                time: req.created_at ? new Date(req.created_at).toLocaleString('id-ID') : 'Baru saja',
                 status: req.status === 'resolved' ? 'b-approved' : 'b-pending',
                 statusLabel: req.status === 'resolved' ? 'Berhasil' : 'Menunggu',
-                timestamp: new Date(req.createdAt).getTime()
+                timestamp: req.created_at ? new Date(req.created_at).getTime() : Date.now()
             });
         });
         return activities.sort((a,b) => b.timestamp - a.timestamp).slice(0, 5);

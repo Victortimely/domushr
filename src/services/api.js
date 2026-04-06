@@ -36,10 +36,12 @@ class ApiClient {
 
     // Handle 401 — token expired
     if (response.status === 401) {
-      this.setToken(null);
-      localStorage.removeItem('domushr_user');
-      window.location.href = '/';
-      throw new Error('Sesi telah berakhir. Silakan login ulang.');
+      if (!path.includes('/auth/login')) {
+        this.setToken(null);
+        localStorage.removeItem('domushr_user');
+        window.location.href = '/';
+      }
+      throw new Error('Username atau password salah.');
     }
 
     let data;

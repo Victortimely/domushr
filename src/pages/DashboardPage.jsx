@@ -158,27 +158,37 @@ export default function DashboardPage() {
     const [mapZoom, setMapZoom] = useState(1);
 
     useEffect(() => {
-        let saved = localStorage.getItem('indonesiaMapData');
-        let parsed = saved ? JSON.parse(saved) : null;
-        
-        // Reset localStorage if we see old 'top' attributes and no 'lng'
-        if (parsed && parsed.length > 0 && parsed[0].lng === undefined) {
-            localStorage.removeItem('indonesiaMapData');
-            parsed = null;
-        }
-
-        if (parsed) {
-            setMapCounts(parsed);
-        } else {
-            setMapCounts(initialMapData);
-        }
+        loadMapData();
         loadData();
     }, []);
+
+    async function loadMapData() {
+        try {
+            const data = await api.get('/settings/indonesiaMapData');
+            if (data && data.value) {
+                const parsed = JSON.parse(data.value);
+                setMapCounts(parsed);
+            } else {
+                setMapCounts(initialMapData);
+            }
+        } catch (err) {
+            console.error('Failed to load map data from API, using initial:', err);
+            setMapCounts(initialMapData);
+        }
+    }
+
+    const handleSaveMap = async () => {
+        try {
+            await api.put('/settings/indonesiaMapData', { value: JSON.stringify(mapCounts) });
+            toast.success('Peta sebaran karyawan berhasil disimpan ke database');
+        } catch (err) {
+            toast.error('Gagal menyimpan peta: ' + err.message);
+        }
+    };
 
     const updateMapCount = (id, newCount) => {
         const updated = mapCounts.map(m => m.id === id ? { ...m, count: newCount } : m);
         setMapCounts(updated);
-        localStorage.setItem('indonesiaMapData', JSON.stringify(updated));
     };
 
     const handleAddMarker = (e) => {
@@ -196,16 +206,14 @@ export default function DashboardPage() {
         };
         const updated = [...mapCounts, marker];
         setMapCounts(updated);
-        localStorage.setItem('indonesiaMapData', JSON.stringify(updated));
         setNewMarker({ name: '', lat: 0, lng: 118, count: 0 });
-        toast.success(`Titik lokasi ${marker.name} ditambahkan`);
+        toast.success(`Titik lokasi ${marker.name} ditambahkan (Klik simpan untuk permanen)`);
     };
 
     const handleDeleteMarker = (id) => {
         const updated = mapCounts.filter(m => m.id !== id);
         setMapCounts(updated);
-        localStorage.setItem('indonesiaMapData', JSON.stringify(updated));
-        toast.success('Lokasi dihapus');
+        toast.success('Lokasi dihapus (Klik simpan untuk permanen)');
     };
 
     async function loadData() {
@@ -475,59 +483,67 @@ export default function DashboardPage() {
                     </ComposableMap>
                 </div>
 
-                <hr style={{ border: 'none', borderBottom: '1px solid var(--border)', margin: '24px 0' }} />
-
-                {/* Edit Menu Area */}
-                <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>✏️ Edit & Tambah Lokasi</h2>
-                
-                {/* Data List Editor */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px', maxHeight: '250px', overflowY: 'auto', paddingRight: '8px' }}>
-                    {mapCounts.map(marker => (
-                        <div key={marker.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{marker.name}</span>
-                                <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>Posisi: Lon={marker.lng} Lat={marker.lat}</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <input 
-                                    type="number" 
-                                    value={marker.count} 
-                                    onChange={(e) => updateMapCount(marker.id, parseInt(e.target.value) || 0)}
-                                    title="Jumlah Karyawan"
-                                    style={{ width: '60px', background: 'var(--bg)', border: '1px solid var(--purple)', color: 'var(--text)', padding: '6px', borderRadius: '6px', textAlign: 'center', fontWeight: 'bold' }}
-                                />
-                                <button 
-                                    onClick={() => handleDeleteMarker(marker.id)}
-                                    style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '16px', padding: '4px' }}
-                                    title="Hapus Lokasi"
-                                >
-                                    ✖
-                                </button>
-                            </div>
+                {/* Edit Menu Area — Master Only */}
+                {user?.role === 'master' && (
+                    <>
+                        <hr style={{ border: 'none', borderBottom: '1px solid var(--border)', margin: '24px 0' }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0 }}>✏️ Edit & Tambah Lokasi</h2>
+                            <button className="btn btn-primary" onClick={handleSaveMap} style={{ background: 'var(--success, #10b981)', border: 'none', padding: '6px 16px', borderRadius: '8px', fontSize: '13px' }}>
+                                💾 Simpan Perubahan Peta
+                            </button>
                         </div>
-                    ))}
-                </div>
+                        
+                        {/* Data List Editor */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px', maxHeight: '250px', overflowY: 'auto', paddingRight: '8px' }}>
+                            {mapCounts.map(marker => (
+                                <div key={marker.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{marker.name}</span>
+                                        <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>Posisi: Lon={marker.lng} Lat={marker.lat}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <input 
+                                            type="number" 
+                                            value={marker.count} 
+                                            onChange={(e) => updateMapCount(marker.id, parseInt(e.target.value) || 0)}
+                                            title="Jumlah Karyawan"
+                                            style={{ width: '60px', background: 'var(--bg)', border: '1px solid var(--purple)', color: 'var(--text)', padding: '6px', borderRadius: '6px', textAlign: 'center', fontWeight: 'bold' }}
+                                        />
+                                        <button 
+                                            onClick={() => handleDeleteMarker(marker.id)}
+                                            style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '16px', padding: '4px' }}
+                                            title="Hapus Lokasi"
+                                        >
+                                            ✖
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
 
-                {/* Add New Point Form */}
-                <div style={{ background: 'var(--surface2)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-end' }}>
-                    <div style={{ flex: '1 1 200px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Nama Daerah</label>
-                        <input className="form-input" style={{ background: 'var(--bg)', padding: '8px 12px' }} placeholder="Cth: Makassar" value={newMarker.name} onChange={(e) => setNewMarker({...newMarker, name: e.target.value})} />
-                    </div>
-                    <div style={{ width: '100px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Longitude</label>
-                        <input className="form-input" type="number" step="0.1" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.lng} onChange={(e) => setNewMarker({...newMarker, lng: e.target.value})} />
-                    </div>
-                    <div style={{ width: '100px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Latitude</label>
-                        <input className="form-input" type="number" step="0.1" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.lat} onChange={(e) => setNewMarker({...newMarker, lat: e.target.value})} />
-                    </div>
-                    <div style={{ width: '100px' }}>
-                        <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Jml. Karyawan</label>
-                        <input className="form-input" type="number" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.count} onChange={(e) => setNewMarker({...newMarker, count: Number(e.target.value)})} />
-                    </div>
-                    <button className="btn btn-primary" onClick={handleAddMarker} style={{ padding: '8px 16px', height: '38px', borderRadius: '8px' }}>+ Tambah</button>
-                </div>
+                        {/* Add New Point Form */}
+                        <div style={{ background: 'var(--surface2)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-end' }}>
+                            <div style={{ flex: '1 1 200px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Nama Daerah</label>
+                                <input className="form-input" style={{ background: 'var(--bg)', padding: '8px 12px' }} placeholder="Cth: Makassar" value={newMarker.name} onChange={(e) => setNewMarker({...newMarker, name: e.target.value})} />
+                            </div>
+                            <div style={{ width: '100px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Longitude</label>
+                                <input className="form-input" type="number" step="0.1" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.lng} onChange={(e) => setNewMarker({...newMarker, lng: e.target.value})} />
+                            </div>
+                            <div style={{ width: '100px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Latitude</label>
+                                <input className="form-input" type="number" step="0.1" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.lat} onChange={(e) => setNewMarker({...newMarker, lat: e.target.value})} />
+                            </div>
+                            <div style={{ width: '100px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Jml. Karyawan</label>
+                                <input className="form-input" type="number" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.count} onChange={(e) => setNewMarker({...newMarker, count: Number(e.target.value)})} />
+                            </div>
+                            <button className="btn btn-primary" onClick={handleAddMarker} style={{ padding: '8px 16px', height: '38px', borderRadius: '8px' }}>+ Tambah</button>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Unsurveyed Employees List */}
