@@ -93,9 +93,6 @@ export default function SurveyPlannerPage() {
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [memberForm, setMemberForm] = useState({ name: '', jabatan: '', divisi: '' });
 
-  const [showVettingModal, setShowVettingModal] = useState(false);
-  const [vettingForm, setVettingForm] = useState({ employeeId: '', deadline: '' });
-
   const [editingBudgetTotal, setEditingBudgetTotal] = useState(false);
   const [budgetTotalInput, setBudgetTotalInput] = useState('');
 
@@ -156,7 +153,6 @@ export default function SurveyPlannerPage() {
           budget: newTrip.budget,
           packing: newTrip.packing,
           members: newTrip.members,
-          vettingTargets: newTrip.vettingTargets,
         });
         return newTrip;
       });
@@ -368,34 +364,6 @@ export default function SurveyPlannerPage() {
     toast.success('Anggota dihapus');
   };
 
-  /* ═══════════════ VETTING TARGET CRUD ═══════════════ */
-  const handleSaveVetting = () => {
-    const emp = employees.find(e => String(e.id) === String(vettingForm.employeeId));
-    if (!emp) { toast.error('Pilih karyawan'); return; }
-    if (!vettingForm.deadline) { toast.error('Tentukan deadline'); return; }
-    const target = {
-      id: generateId(),
-      employeeId: emp.id,
-      name: emp.name,
-      department: emp.department || '-',
-      position: emp.position || '-',
-      deadline: vettingForm.deadline,
-    };
-    updateActiveTrip(trip => ({
-      ...trip,
-      vettingTargets: [...(trip.vettingTargets || []), target]
-    }));
-    setShowVettingModal(false);
-    toast.success('Target vetting ditambahkan');
-  };
-
-  const removeVetting = (id) => {
-    updateActiveTrip(trip => ({
-      ...trip,
-      vettingTargets: trip.vettingTargets.filter(v => v.id !== id)
-    }));
-    toast.success('Target vetting dihapus');
-  };
 
   /* ═══════════════════════════════════════════
      TAB BADGES
@@ -405,7 +373,7 @@ export default function SurveyPlannerPage() {
     return {
       itinerary: activeTrip.itinerary?.length || 0,
       budget: activeTrip.budget?.items?.length || 0,
-      members: (activeTrip.members?.length || 0) + (activeTrip.vettingTargets?.length || 0),
+      members: (activeTrip.members?.length || 0),
     };
   }, [activeTrip]);
 
@@ -460,7 +428,7 @@ export default function SurveyPlannerPage() {
       {activeTab === 'itinerary' && <ItineraryTab trip={activeTrip} onAdd={openNewItinerary} onEdit={openEditItinerary} onDelete={deleteItinerary} />}
       {activeTab === 'budget' && <BudgetTab trip={activeTrip} onAddBudget={() => { setBudgetForm({ name:'', amount:'', category:'🏨' }); setShowBudgetModal(true); }} onDeleteBudget={deleteBudget} editingTotal={editingBudgetTotal} budgetTotalInput={budgetTotalInput} onStartEditTotal={() => { setBudgetTotalInput(String(activeTrip?.budget?.total || 0)); setEditingBudgetTotal(true); }} onChangeTotalInput={setBudgetTotalInput} onSaveTotal={handleSaveBudgetTotal} onCancelTotal={() => setEditingBudgetTotal(false)} />}
       {activeTab === 'packing' && <PackingTab trip={activeTrip} onToggle={togglePackingItem} onAdd={addPackingItem} onRemove={removePackingItem} />}
-      {activeTab === 'members' && <MembersTab trip={activeTrip} onAddMember={() => { setMemberForm({ name:'', jabatan:'', divisi:'' }); setShowMemberModal(true); }} onRemoveMember={removeMember} onAddVetting={() => { setVettingForm({ employeeId:'', deadline:'' }); setShowVettingModal(true); }} onRemoveVetting={removeVetting} />}
+      {activeTab === 'members' && <MembersTab trip={activeTrip} onAddMember={() => { setMemberForm({ name:'', jabatan:'', divisi:'' }); setShowMemberModal(true); }} onRemoveMember={removeMember} />}
 
       {/* ═══ MODALS ═══ */}
 
@@ -639,36 +607,6 @@ export default function SurveyPlannerPage() {
         </div>
       )}
 
-      {/* Vetting Target Modal */}
-      {showVettingModal && (
-        <div className="modal-overlay" onClick={() => setShowVettingModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>🎯 Tambah Target Vetting</h3>
-              <button className="btn-close-modal" onClick={() => setShowVettingModal(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="form-label">Pilih Karyawan (dari Database)</label>
-                <select className="form-select" value={vettingForm.employeeId} onChange={e => setVettingForm(f => ({...f, employeeId: e.target.value}))}>
-                  <option value="" disabled>-- Pilih Karyawan --</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name} — {emp.department || '-'} / {emp.position || '-'}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Deadline Date</label>
-                <input className="form-input" type="date" value={vettingForm.deadline} onChange={e => setVettingForm(f => ({...f, deadline: e.target.value}))} />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-action" onClick={() => setShowVettingModal(false)}>Batal</button>
-              <button className="btn-action primary" onClick={handleSaveVetting}>🎯 Tambah Target</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -934,7 +872,7 @@ function PackingTab({ trip, onToggle, onAdd, onRemove }) {
 }
 
 /* ═══════ 5. MEMBERS TAB ═══════ */
-function MembersTab({ trip, onAddMember, onRemoveMember, onAddVetting, onRemoveVetting }) {
+function MembersTab({ trip, onAddMember, onRemoveMember }) {
   if (!trip) return <NoTripState tab="Members" />;
 
   return (
@@ -963,37 +901,6 @@ function MembersTab({ trip, onAddMember, onRemoveMember, onAddVetting, onRemoveV
           ))}
         </div>
       )}
-
-      <div className="vetting-section">
-        <h3>
-          🎯 Karyawan Yang Harus Di Vetting
-          <button className="btn-action primary" onClick={onAddVetting} style={{marginLeft:'auto',fontSize:'11px',padding:'6px 12px'}}>
-            + Tambah dari Database
-          </button>
-        </h3>
-
-        {(trip.vettingTargets || []).length === 0 ? (
-          <div className="empty-state" style={{padding:'20px'}}>
-            <p style={{fontSize:'12px'}}>Belum ada target vetting. Tambahkan dari database karyawan.</p>
-          </div>
-        ) : (
-          <div className="vetting-list">
-            {trip.vettingTargets.map((vet, idx) => (
-              <div key={vet.id || idx} className="vetting-item">
-                <div className="vet-avatar" style={{background: AVATAR_COLORS[idx % AVATAR_COLORS.length]}}>
-                  {initials(vet.name)}
-                </div>
-                <div className="vet-info">
-                  <div className="vet-name">{vet.name}</div>
-                  <div className="vet-dept">{vet.position} · {vet.department}</div>
-                </div>
-                <div className="vet-deadline">📅 {vet.deadline}</div>
-                <button className="vet-remove" onClick={() => onRemoveVetting(vet.id)}>✕</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
