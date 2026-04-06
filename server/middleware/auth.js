@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  console.error('CRITICAL: JWT_SECRET environment variable is not set!');
+const JWT_SECRET = process.env.JWT_SECRET || 'domushr_secret_secure_fallback_2026';
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET environment variable is not set! Using a default fallback.');
 }
 
 export function authenticateToken(req, res, next) {

@@ -26,6 +26,7 @@ export const generalLimiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS', // Skip preflight requests
   message: { error: 'Terlalu banyak request. Coba lagi nanti.' },
 });
 
@@ -35,5 +36,6 @@ export const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS', // Skip preflight requests
   message: { error: 'Terlalu banyak percobaan login. Coba lagi dalam 15 menit.' },
 });
