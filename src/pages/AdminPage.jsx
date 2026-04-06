@@ -380,7 +380,14 @@ export default function AdminPage() {
                                 <h3>Eksekusi Reset Password</h3>
                                 <div className="fg">
                                     <label className="fl">Username (User ID)</label>
-                                    <input className="sp-input" type="text" placeholder="Masukkan ID yang akan direset" value={resetUid} onChange={e => setResetUid(e.target.value)} />
+                                    <select className="sp-input" value={resetUid} onChange={e => setResetUid(e.target.value)} style={{ appearance: 'auto' }}>
+                                        <option value="" style={{ background: '#070511' }}>Pilih User...</option>
+                                        {users.map(u => (
+                                            <option key={u.username} value={u.username} style={{ background: '#070511' }}>
+                                                {u.username} ({u.name})
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="fg">
                                     <label className="fl">Password Baru</label>
