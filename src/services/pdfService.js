@@ -239,17 +239,35 @@ export async function generateSurveyPlannerPDF(trip) {
         if (y > 230) { doc.addPage(); y = 20; }
         y = addSection(doc, 'III. ANGGARAN BIAYA (BUDGET)', y, margin, contentWidth);
         
-        // Robust budget item extraction
+        // --- UNIVERSAL DATA PARSER FOR BUDGET ---
+        let budgetObj = { total: 0, items: [] };
+        try {
+            if (typeof trip.budget === 'string') {
+                budgetObj = JSON.parse(trip.budget);
+            } else if (trip.budget && typeof trip.budget === 'object') {
+                budgetObj = trip.budget;
+            }
+        } catch (e) { console.error('Budget Parse Error:', e); }
+
+        // Fallback for flat array or old structure
         let bItems = [];
-        if (trip.budget && Array.isArray(trip.budget.items)) {
-            bItems = trip.budget.items;
-        } else if (Array.isArray(trip.budget)) {
-            bItems = trip.budget;
+        if (Array.isArray(budgetObj.items)) {
+            bItems = budgetObj.items;
+        } else if (Array.isArray(budgetObj)) {
+            bItems = budgetObj;
+        } else if (trip.budgetItems && Array.isArray(trip.budgetItems)) {
+            bItems = trip.budgetItems;
         }
+
+        // Global Limit Fallback
+        const limitValue = Number(budgetObj.total || trip.totalBudget || trip.budget_total || 0);
+        
+        // Debug Log (Visible in Console F12)
+        console.log('PDF BUDGET DEBUG:', { budgetObj, bItems, limitValue });
 
         if (bItems.length === 0) {
             doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
-            doc.text('Belum ada rincian anggaran yang ditambahkan.', margin + 4, y);
+            doc.text('Belum ada rincian anggaran yang tercatat di sistem.', margin + 4, y);
             y += 10;
         } else {
             doc.setFillColor(248, 250, 252); doc.rect(margin, y - 4, contentWidth, 8, 'F');
@@ -262,11 +280,13 @@ export async function generateSurveyPlannerPDF(trip) {
             bItems.forEach(item => {
                 if (y > 270) { doc.addPage(); y = 20; }
                 doc.setFont('helvetica', 'normal');
-                doc.text(String(item.name || item.description || '-'), margin + 5, y);
-                const amt = Number(item.amount || 0); spent += amt;
+                const itemName = String(item.name || item.item || item.description || 'Tanpa Nama');
+                doc.text(itemName, margin + 5, y);
+                const amt = Number(item.amount || item.value || 0); spent += amt;
                 doc.text(amt.toLocaleString('id-ID'), pageWidth - margin - 5, y, { align: 'right' });
                 y += 6;
             });
+            
             y += 4;
             doc.setDrawColor(100); doc.line(pageWidth - 80, y, pageWidth - margin, y);
             y += 6;
@@ -274,7 +294,8 @@ export async function generateSurveyPlannerPDF(trip) {
             doc.text('TOTAL TERPAKAI', pageWidth - margin - 80, y);
             doc.text('Rp ' + spent.toLocaleString('id-ID'), pageWidth - margin - 5, y, { align: 'right' });
             y += 6;
-            const rem = limit - spent;
+            
+            const rem = limitValue - spent;
             doc.setTextColor(rem < 0 ? 200 : 30, 41, 59);
             doc.text('SISA ANGGARAN', pageWidth - margin - 80, y);
             doc.text('Rp ' + rem.toLocaleString('id-ID'), pageWidth - margin - 5, y, { align: 'right' });
