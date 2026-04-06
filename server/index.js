@@ -17,6 +17,9 @@ const UPLOADS_PATH = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'upl
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy for rate limiting behind Railway/Load Balancers
+app.set('trust proxy', 1);
+
 // ===== Security Middleware =====
 app.use(securityHeaders);
 app.use(corsMiddleware);
