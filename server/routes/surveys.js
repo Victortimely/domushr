@@ -67,6 +67,12 @@ router.get('/:id', (req, res) => {
   try {
     const survey = db.prepare('SELECT * FROM surveys WHERE id = ?').get(req.params.id);
     if (!survey) return res.status(404).json({ error: 'Survey tidak ditemukan.' });
+
+    // Security check: Only owner or admin/master can view
+    if (req.user.role !== 'master' && req.user.role !== 'admin' && survey.surveyor_id !== req.user.id) {
+      return res.status(403).json({ error: 'Anda tidak memiliki akses ke survey ini.' });
+    }
+
     survey.data = survey.data ? JSON.parse(survey.data) : {};
     survey.photos = survey.photos ? JSON.parse(survey.photos) : [];
     res.json(survey);
@@ -117,6 +123,11 @@ router.put('/:id', (req, res) => {
     const survey = db.prepare('SELECT * FROM surveys WHERE id = ?').get(req.params.id);
     if (!survey) return res.status(404).json({ error: 'Survey tidak ditemukan.' });
 
+    // Security check: Only owner or master can edit
+    if (req.user.role !== 'master' && survey.surveyor_id !== req.user.id) {
+      return res.status(403).json({ error: 'Anda tidak diizinkan mengubah survey ini.' });
+    }
+
     const {
       employee_id, employee_name, employee_nik, employee_dept,
       status, survey_date, latitude, longitude, accuracy,
@@ -153,6 +164,12 @@ router.delete('/:id', (req, res) => {
   try {
     const survey = db.prepare('SELECT * FROM surveys WHERE id = ?').get(req.params.id);
     if (!survey) return res.status(404).json({ error: 'Survey tidak ditemukan.' });
+
+    // Security check: Only owner or admin/master can delete
+    if (req.user.role !== 'master' && req.user.role !== 'admin' && survey.surveyor_id !== req.user.id) {
+      return res.status(403).json({ error: 'Anda tidak diizinkan menghapus survey ini.' });
+    }
+
     db.prepare('DELETE FROM surveys WHERE id = ?').run(req.params.id);
     res.json({ message: 'Survey berhasil dihapus.' });
   } catch (err) {
@@ -165,6 +182,11 @@ router.post('/:id/photos', upload.array('photos', 10), (req, res) => {
   try {
     const survey = db.prepare('SELECT * FROM surveys WHERE id = ?').get(req.params.id);
     if (!survey) return res.status(404).json({ error: 'Survey tidak ditemukan.' });
+
+    // Security check: Only owner or master can upload photos
+    if (req.user.role !== 'master' && survey.surveyor_id !== req.user.id) {
+      return res.status(403).json({ error: 'Anda tidak diizinkan mengunggah foto ke survey ini.' });
+    }
 
     const existingPhotos = survey.photos ? JSON.parse(survey.photos) : [];
     const newPhotos = req.files.map(f => `/uploads/${f.filename}`);

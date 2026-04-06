@@ -9,8 +9,13 @@ export const securityHeaders = helmet({
 });
 
 // CORS — allow frontend origin
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
+if (allowedOrigins === '*') {
+  console.warn('WARNING: CORS origin is set to "*". Consider limiting this in production via ALLOWED_ORIGINS.');
+}
+
 export const corsMiddleware = cors({
-  origin: '*',
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 });

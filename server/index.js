@@ -31,11 +31,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(UPLOADS_PATH));
 
 // ===== API Routes =====
-// Public routes (no auth required)
-app.use('/api/auth', authRoutes);
+// Public routes (no auth required) - apply auth rate limiter
+app.use('/api/auth', authLimiter, authRoutes);
 
 // Password reset request (public - any user can request)
-app.post('/api/password-reset-request', (req, res) => {
+app.post('/api/password-reset-request', authLimiter, (req, res) => {
   try {
     const { username } = req.body;
     if (!username) return res.status(400).json({ error: 'Username wajib diisi.' });
@@ -66,6 +66,12 @@ app.use('/api/trips', authenticateToken, tripRoutes);
 // Settings endpoints
 app.get('/api/settings/:key', authenticateToken, (req, res) => {
   try {
+    // Some settings like map data are readable by all authenticated users
+    const publicKeys = ['indonesiaMapData'];
+    if (!publicKeys.includes(req.params.key) && req.user.role !== 'master') {
+      return res.status(403).json({ error: 'Anda tidak diizinkan membaca pengaturan ini.' });
+    }
+
     const setting = db.prepare('SELECT value FROM settings WHERE key = ?').get(req.params.key);
     res.json({ key: req.params.key, value: setting ? setting.value : null });
   } catch (err) {
@@ -75,6 +81,11 @@ app.get('/api/settings/:key', authenticateToken, (req, res) => {
 
 app.put('/api/settings/:key', authenticateToken, (req, res) => {
   try {
+    // Only Master can change settings
+    if (req.user.role !== 'master') {
+      return res.status(403).json({ error: 'Hanya Master User yang dapat mengubah pengaturan.' });
+    }
+
     const { value } = req.body;
     db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(req.params.key, String(value));
     res.json({ key: req.params.key, value });
