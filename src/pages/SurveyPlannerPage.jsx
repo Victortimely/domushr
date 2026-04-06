@@ -12,7 +12,7 @@ const TABS = [
   { id: 'itinerary', icon: '📍',  label: 'Itinerary' },
   { id: 'budget',    icon: '💰',  label: 'Budget' },
   { id: 'packing',   icon: '🎒',  label: 'Packing List' },
-  { id: 'members',   icon: '👥',  label: 'Members' },
+  { id: 'members',   icon: '👥',  label: 'Staff Vetting' },
 ];
 
 const TRIP_TYPES = [
@@ -608,7 +608,7 @@ export default function SurveyPlannerPage() {
         <div className="modal-overlay" onClick={() => setShowMemberModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>👤 Tambah Anggota</h3>
+              <h3>👤 Tambah Staff Vetting</h3>
               <button className="btn-close-modal" onClick={() => setShowMemberModal(false)}>✕</button>
             </div>
             <div className="modal-body">
@@ -629,7 +629,7 @@ export default function SurveyPlannerPage() {
             </div>
             <div className="modal-footer">
               <button className="btn-action" onClick={() => setShowMemberModal(false)}>Batal</button>
-              <button className="btn-action primary" onClick={handleSaveMember}>👤 Tambah Anggota</button>
+              <button className="btn-action primary" onClick={handleSaveMember}>👤 Tambah Staff Vetting</button>
             </div>
           </div>
         </div>
@@ -899,15 +899,15 @@ function PackingTab({ trip, onToggle, onAdd, onRemove }) {
   );
 }
 
-/* ═══════ 5. MEMBERS TAB ═══════ */
+/* ═══════ 5. STAFF VETTING TAB ═══════ */
 function MembersTab({ trip, onAddMember, onRemoveMember }) {
-  if (!trip) return <NoTripState tab="Members" />;
+  if (!trip) return <NoTripState tab="Staff Vetting" />;
 
   return (
     <div className="section-card">
       <div className="card-header">
-        <h2>👥 Anggota Tim</h2>
-        <button className="btn-action primary" onClick={onAddMember}>👤 Tambah Anggota</button>
+        <h2>👥 Daftar Staff Vetting</h2>
+        <button className="btn-action primary" onClick={onAddMember}>➕ Tambah Staff Vetting</button>
       </div>
 
       {(trip.members || []).length === 0 ? (

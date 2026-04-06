@@ -238,15 +238,23 @@ export async function generateSurveyPlannerPDF(trip) {
         // SECTION III: ANGGARAN
         if (y > 230) { doc.addPage(); y = 20; }
         y = addSection(doc, 'III. ANGGARAN BIAYA (BUDGET)', y, margin, contentWidth);
-        const bItems = (trip.budget?.items || (Array.isArray(trip.budget) ? trip.budget : []));
+        
+        // Robust budget item extraction
+        let bItems = [];
+        if (trip.budget && Array.isArray(trip.budget.items)) {
+            bItems = trip.budget.items;
+        } else if (Array.isArray(trip.budget)) {
+            bItems = trip.budget;
+        }
+
         if (bItems.length === 0) {
             doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
-            doc.text('Belum ada anggaran.', margin + 4, y);
+            doc.text('Belum ada rincian anggaran yang ditambahkan.', margin + 4, y);
             y += 10;
         } else {
             doc.setFillColor(248, 250, 252); doc.rect(margin, y - 4, contentWidth, 8, 'F');
             doc.setFontSize(8); doc.setFont('helvetica', 'bold');
-            doc.text('ITEM', margin + 5, y + 1);
+            doc.text('ITEM PENGELUARAN', margin + 5, y + 1);
             doc.text('JUMLAH (RP)', pageWidth - margin - 5, y + 1, { align: 'right' });
             y += 10;
 
@@ -254,7 +262,7 @@ export async function generateSurveyPlannerPDF(trip) {
             bItems.forEach(item => {
                 if (y > 270) { doc.addPage(); y = 20; }
                 doc.setFont('helvetica', 'normal');
-                doc.text(String(item.name || '-'), margin + 5, y);
+                doc.text(String(item.name || item.description || '-'), margin + 5, y);
                 const amt = Number(item.amount || 0); spent += amt;
                 doc.text(amt.toLocaleString('id-ID'), pageWidth - margin - 5, y, { align: 'right' });
                 y += 6;
@@ -274,20 +282,20 @@ export async function generateSurveyPlannerPDF(trip) {
             y += 10;
         }
 
-        // SECTION IV: MEMBERS
+        // SECTION IV: STAFF VETTING
         if (y > 230) { doc.addPage(); y = 20; }
-        y = addSection(doc, 'IV. TIM PELAKSANA (MEMBERS)', y, margin, contentWidth);
+        y = addSection(doc, 'IV. DAFTAR STAFF VETTING', y, margin, contentWidth);
         const mbrs = trip.members || [];
         if (mbrs.length === 0) {
-            doc.setFont('helvetica', 'italic'); doc.text('Anggota tim belum diset.', margin + 4, y);
+            doc.setFont('helvetica', 'italic'); doc.text('Staff vetting belum diset.', margin + 4, y);
             y += 10;
         } else {
             mbrs.forEach((m, idx) => {
                 if (y > 270) { doc.addPage(); y = 20; }
                 doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-                doc.text(`${idx + 1}. ${m.name || '-'}`, margin + 5, y);
+                doc.text(`Staff Vetting ${idx + 1}: ${m.name || '-'}`, margin + 5, y);
                 doc.setFont('helvetica', 'normal');
-                doc.text(` - ${m.jabatan || m.position || '-'}`, margin + 50, y);
+                doc.text(` - ${m.jabatan || m.position || m.role || 'Staff Vetting'}`, margin + 65, y);
                 y += 7;
             });
             y += 5;
