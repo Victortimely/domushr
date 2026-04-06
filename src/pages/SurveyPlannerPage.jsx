@@ -76,7 +76,16 @@ export default function SurveyPlannerPage() {
 
   const [showItineraryModal, setShowItineraryModal] = useState(false);
   const [editingItinerary, setEditingItinerary] = useState(null);
-  const [itineraryForm, setItineraryForm] = useState({ employeeName: '', address: '', coordinates: '', time: '', day: 1 });
+  const [itineraryForm, setItineraryForm] = useState({ 
+    employeeId: '', 
+    employeeName: '', 
+    jabatan: '', 
+    divisi: '', 
+    address: '', 
+    coordinates: '', 
+    time: '', 
+    day: 1 
+  });
 
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [budgetForm, setBudgetForm] = useState({ name: '', amount: '', category: '🏨' });
@@ -221,7 +230,7 @@ export default function SurveyPlannerPage() {
   /* ═══════════════ ITINERARY CRUD ═══════════════ */
   const handleSaveItinerary = () => {
     if (!itineraryForm.employeeName.trim()) {
-      toast.error('Nama karyawan wajib diisi');
+      toast.error('Pilih unit karyawan yang akan di-vetting');
       return;
     }
     const item = { ...itineraryForm, id: editingItinerary?.id || generateId() };
@@ -236,7 +245,7 @@ export default function SurveyPlannerPage() {
     });
     setShowItineraryModal(false);
     setEditingItinerary(null);
-    toast.success(editingItinerary ? 'Itinerary diperbarui' : 'Karyawan vetting ditambahkan');
+    toast.success(editingItinerary ? 'Itinerary diperbarui' : 'Karyawan yang akan di-vetting ditambahkan');
   };
 
   const deleteItinerary = (id) => {
@@ -246,8 +255,18 @@ export default function SurveyPlannerPage() {
 
   const openNewItinerary = () => {
     setEditingItinerary(null);
-    setItineraryForm({ employeeName: '', address: '', coordinates: '', time: '', day: 1 });
-    setShowItineraryModal(true);
+    setItineraryForm({ 
+      employeeId: '', 
+      employeeName: '', 
+      jabatan: '', 
+      divisi: '', 
+      address: '', 
+      coordinates: '', 
+      time: '', 
+      day: 1 
+    });
+    setShowItineraryModal(false); // To reset modal state if needed
+    setTimeout(() => setShowItineraryModal(true), 0);
   };
   const openEditItinerary = (item) => {
     setEditingItinerary(item);
@@ -488,25 +507,52 @@ export default function SurveyPlannerPage() {
         <div className="modal-overlay" onClick={() => setShowItineraryModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{editingItinerary ? '✏️ Edit Itinerary' : '➕ Tambah Karyawan Yang Mau di Vetting'}</h3>
+              <h3>{editingItinerary ? '✏️ Edit Karyawan' : '➕ Tambah Karyawan Yang Akan Di Vetting'}</h3>
               <button className="btn-close-modal" onClick={() => setShowItineraryModal(false)}>✕</button>
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label className="form-label">Nama Karyawan</label>
-                <input className="form-input" value={itineraryForm.employeeName} onChange={e => setItineraryForm(f => ({...f, employeeName: e.target.value}))} placeholder="Nama karyawan yang akan di-vetting" />
+                <label className="form-label">Pilih Karyawan (Database)</label>
+                <select 
+                  className="form-select" 
+                  value={itineraryForm.employeeId} 
+                  onChange={e => {
+                    const emp = employees.find(emp => String(emp.id) === String(e.target.value));
+                    if (emp) {
+                      setItineraryForm(f => ({
+                        ...f, 
+                        employeeId: emp.id,
+                        employeeName: emp.name,
+                        jabatan: emp.position || '',
+                        divisi: emp.department || '',
+                        address: emp.address || ''
+                      }));
+                    }
+                  }}
+                >
+                  <option value="" disabled>-- Pilih Karyawan --</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.name} — {emp.position || '-'} / {emp.department || '-'}</option>
+                  ))}
+                </select>
               </div>
-              <div className="form-group">
-                <label className="form-label">Alamat</label>
-                <input className="form-input" value={itineraryForm.address} onChange={e => setItineraryForm(f => ({...f, address: e.target.value}))} placeholder="Alamat lengkap lokasi vetting" />
-              </div>
+              
+              {itineraryForm.employeeName && (
+                <div style={{ background: 'var(--surface2)', padding: '12px', borderRadius: '10px', marginBottom: '16px', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--accent)', marginBottom: '4px' }}>{itineraryForm.employeeName}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '2px' }}><strong>Jabatan:</strong> {itineraryForm.jabatan || '-'}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '2px' }}><strong>Divisi:</strong> {itineraryForm.divisi || '-'}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}><strong>Alamat KTP:</strong> {itineraryForm.address || '-'}</div>
+                </div>
+              )}
+
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Titik Koordinat Lokasi</label>
                   <input className="form-input" value={itineraryForm.coordinates} onChange={e => setItineraryForm(f => ({...f, coordinates: e.target.value}))} placeholder="-6.200000, 106.816666" />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Jam</label>
+                  <label className="form-label">Jam Vetting</label>
                   <input className="form-input" type="time" value={itineraryForm.time} onChange={e => setItineraryForm(f => ({...f, time: e.target.value}))} />
                 </div>
               </div>
@@ -704,8 +750,8 @@ function ItineraryTab({ trip, onAdd, onEdit, onDelete }) {
   return (
     <div className="section-card">
       <div className="card-header">
-        <h2>📍 Daftar Karyawan Vetting</h2>
-        <button className="btn-action primary" onClick={onAdd}>➕ Tambah Karyawan Yang Mau di Vetting</button>
+        <h2>📍 Karyawan Yang Akan Di Vetting</h2>
+        <button className="btn-action primary" onClick={onAdd}>➕ Tambah Karyawan Yang Akan Di Vetting</button>
       </div>
       {sorted.length === 0 ? (
         <div className="empty-state">
@@ -723,7 +769,10 @@ function ItineraryTab({ trip, onAdd, onEdit, onDelete }) {
               </div>
               <div className="itinerary-info">
                 <div className="itinerary-name">{item.employeeName}</div>
-                {item.address && <div className="itinerary-address">📍 {item.address}</div>}
+                <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>
+                  {item.jabatan || '-'} · {item.divisi || '-'}
+                </div>
+                {item.address && <div className="itinerary-address">🏠 {item.address}</div>}
                 <div className="itinerary-meta">
                   {item.time && <span className="meta-chip">🕐 {item.time}</span>}
                   {item.coordinates && (
