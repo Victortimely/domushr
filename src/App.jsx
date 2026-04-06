@@ -104,12 +104,15 @@ function AppContent() {
         { to: '/survey/new', icon: '➕', label: 'Survey Baru' },
         { to: '/planner', icon: '🗺️', label: 'Survey Planner' },
         { to: '/employees', icon: '👥', label: 'Karyawan' },
-        { to: '/import', icon: '📥', label: 'Import' },
         { to: '/history', icon: '🕐', label: 'Riwayat' },
     ];
 
-    if (user?.role === 'master') {
-        menuItems.push({ to: '/admin', icon: '🛡️', label: 'Admin' });
+    if (user?.role === 'master' || user?.role === 'admin') {
+        menuItems.splice(4, 0, { to: '/import', icon: '📥', label: 'Import' });
+        // Ensure Admin is always last if master
+        if (user?.role === 'master') {
+            menuItems.push({ to: '/admin', icon: '🛡️', label: 'Admin' });
+        }
     }
 
     return (

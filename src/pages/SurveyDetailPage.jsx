@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { generateSurveyPDF } from '../services/pdfService';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function SurveyDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const toast = useToast();
     const [survey, setSurvey] = useState(null);
+
+    const isPrivileged = user?.role === 'master' || user?.role === 'admin';
 
     useEffect(() => {
         if (id) {
@@ -76,10 +80,12 @@ export default function SurveyDetailPage() {
                 <Link to={`/survey/${survey.id}`} className="btn btn-primary btn-sm">
                     ✏️ {survey.status === 'draft' ? 'Lanjutkan' : 'Edit'}
                 </Link>
-                {survey.status === 'saved' && (
+                {survey.status === 'saved' && isPrivileged && (
                     <button className="btn btn-success btn-sm" onClick={handleVerify}>✅ Verifikasi</button>
                 )}
-                <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}>📄 Export PDF</button>
+                {isPrivileged && (
+                    <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}>📄 Export PDF</button>
+                )}
                 {mapsLink && (
                     <a href={mapsLink} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">
                         🗺️ Google Maps

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import '../styles/employees.css';
 
@@ -39,8 +40,12 @@ function statusClass(s) {
 }
 
 export default function EmployeesPage() {
+    const { user } = useAuth();
     const toast = useToast();
     const [employees, setEmployees] = useState([]);
+    
+    // Check if user is privileged (master or admin)
+    const isPrivileged = user?.role === 'master' || user?.role === 'admin';
     
     // Filters
     const [search, setSearch] = useState('');
@@ -179,10 +184,12 @@ export default function EmployeesPage() {
                     </h1>
                 </div>
                 <div className="topnav-right">
-                    <button className="btn-add" onClick={openAdd}>
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
-                        Tambah Karyawan
-                    </button>
+                    {isPrivileged && (
+                        <button className="btn-add" onClick={openAdd}>
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
+                            Tambah Karyawan
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -300,10 +307,16 @@ export default function EmployeesPage() {
                                                         <span className="dot"></span>{e.status || 'Tidak diset'}
                                                     </span>
                                                 </td>
-                                                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                                    <button className="action-btn" onClick={() => openEdit(e)} title="Edit Karyawan">✏️</button>
-                                                    <button className="action-btn delete" onClick={() => setDeleteTarget(e)} title="Hapus Karyawan">🗑️</button>
-                                                </td>
+                                                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                                    {isPrivileged ? (
+                                                        <>
+                                                            <button className="action-btn" onClick={() => openEdit(e)} title="Edit Karyawan">✏️</button>
+                                                            <button className="action-btn delete" onClick={() => setDeleteTarget(e)} title="Hapus Karyawan">🗑️</button>
+                                                        </>
+                                                    ) : (
+                                                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Read-only</span>
+                                                    )}
+                                                 </td>
                                             </tr>
                                         );
                                     })
