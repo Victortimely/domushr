@@ -123,8 +123,8 @@ router.put('/:id', (req, res) => {
     const survey = db.prepare('SELECT * FROM surveys WHERE id = ?').get(req.params.id);
     if (!survey) return res.status(404).json({ error: 'Survey tidak ditemukan.' });
 
-    // Security check: Only owner or master can edit
-    if (req.user.role !== 'master' && survey.surveyor_id !== req.user.id) {
+    // Security check: Only owner, admin or master can edit
+    if (req.user.role !== 'master' && req.user.role !== 'admin' && survey.surveyor_id !== req.user.id) {
       return res.status(403).json({ error: 'Anda tidak diizinkan mengubah survey ini.' });
     }
 

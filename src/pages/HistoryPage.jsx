@@ -1,9 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import '../styles/history.css';
 
 export default function HistoryPage() {
+    const { user } = useAuth();
+    const toast = useToast();
     const [surveys, setSurveys] = useState([]);
     const [filtered, setFiltered] = useState([]);
     const [search, setSearch] = useState('');
@@ -34,6 +38,45 @@ export default function HistoryPage() {
             console.error('Failed to load surveys:', error);
         }
     }
+
+    const handleVerify = async (e, id) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!window.confirm('Verifikasi data survey ini?')) return;
+
+        try {
+            await api.put(`/surveys/${id}`, { status: 'verified' });
+            toast.success('Survey berhasil diverifikasi');
+            
+            // Update local state
+            setSurveys(prev => prev.map(s => s.id === id ? { ...s, status: 'verified' } : s));
+        } catch (error) {
+            toast.error(error.message || 'Gagal memverifikasi survey');
+        }
+    };
+
+    const handleVerifyAll = async () => {
+        const syncedSurveys = filtered.filter(s => s.status === 'synced');
+        if (syncedSurveys.length === 0) return;
+
+        if (!window.confirm(`Verifikasi semua (${syncedSurveys.length}) data survey yang terpilih?`)) return;
+
+        try {
+            toast.info(`Memproses verifikasi ${syncedSurveys.length} survey...`);
+            const promises = syncedSurveys.map(s => api.put(`/surveys/${s.id}`, { status: 'verified' }));
+            await Promise.all(promises);
+            
+            toast.success(`${syncedSurveys.length} survey berhasil diverifikasi`);
+            
+            // Update local state
+            const ids = syncedSurveys.map(s => s.id);
+            setSurveys(prev => prev.map(s => ids.includes(s.id) ? { ...s, status: 'verified' } : s));
+        } catch (error) {
+            toast.error(error.message || 'Gagal memverifikasi semua survey');
+            loadSurveys(); // Reload to be safe
+        }
+    };
 
     useEffect(() => {
         let result = [...surveys];
@@ -168,6 +211,13 @@ export default function HistoryPage() {
                     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
                     Ekspor
                 </button>
+
+                {filterStatus === 'synced' && filtered.length > 0 && (user?.role === 'master' || user?.role === 'admin') && (
+                    <button className="verify-all-btn" onClick={handleVerifyAll}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Verifikasi Semua
+                    </button>
+                )}
             </div>
 
             {/* TABS */}
@@ -259,6 +309,15 @@ export default function HistoryPage() {
                                 </div>
                                 <div className="status-col">
                                     <span className={`status-badge ${badgeClass}`}><span className="dot"></span> {badgeLabel}</span>
+                                    {isSynced && (user?.role === 'master' || user?.role === 'admin') && (
+                                        <button 
+                                            className="verify-btn-sm" 
+                                            onClick={(e) => handleVerify(e, s.id)}
+                                            title="Verifikasi Survey"
+                                        >
+                                            Verifikasi
+                                        </button>
+                                    )}
                                 </div>
                             </Link>
                         );

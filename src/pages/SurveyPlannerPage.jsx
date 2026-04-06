@@ -726,7 +726,16 @@ function ItineraryTab({ trip, onAdd, onEdit, onDelete }) {
                 {item.address && <div className="itinerary-address">📍 {item.address}</div>}
                 <div className="itinerary-meta">
                   {item.time && <span className="meta-chip">🕐 {item.time}</span>}
-                  {item.coordinates && <span className="meta-chip">🌐 {item.coordinates}</span>}
+                  {item.coordinates && (
+                    <a 
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.coordinates)}`}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="meta-chip-link"
+                    >
+                      <span className="meta-chip">🌐 {item.coordinates}</span>
+                    </a>
+                  )}
                 </div>
               </div>
               <div className="item-actions">

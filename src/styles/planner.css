@@ -335,6 +335,17 @@
   background: var(--surface);
   border-radius: 6px;
   font-size: 11px; color: var(--text-dim); font-weight: 500;
+  transition: all 0.2s ease;
+}
+.planner-v2 .itinerary-item .meta-chip-link {
+  text-decoration: none;
+  cursor: pointer;
+}
+.planner-v2 .itinerary-item .meta-chip-link:hover .meta-chip {
+  background: var(--purple-light);
+  color: var(--accent);
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.2);
+  transform: translateY(-1px);
 }
 .planner-v2 .itinerary-item .item-actions {
   display: flex; gap: 4px;
