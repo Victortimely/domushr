@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '../services/api';
+import { generateSurveyPlannerPDF } from '../services/pdfService';
 import { useToast } from '../context/ToastContext';
 import '../styles/planner.css';
 
@@ -223,6 +224,21 @@ export default function SurveyPlannerPage() {
     setShowTripModal(true);
   };
 
+  const handleExportPDF = async () => {
+    if (!activeTrip) {
+      toast.error('Pilih trip yang akan diekspor');
+      return;
+    }
+    try {
+      toast.info('Menyiapkan PDF...');
+      const filename = await generateSurveyPlannerPDF(activeTrip);
+      toast.success(`PDF berhasil diunduh: ${filename}`);
+    } catch (err) {
+      console.error('PDF Export Error:', err);
+      toast.error('Gagal membuat PDF');
+    }
+  };
+
   /* ═══════════════ ITINERARY CRUD ═══════════════ */
   const handleSaveItinerary = () => {
     if (!itineraryForm.employeeName.trim()) {
@@ -402,10 +418,22 @@ export default function SurveyPlannerPage() {
             <p className="subtitle">Rencanakan perjalanan vetting karyawan</p>
           </div>
         </div>
-        <button className="btn-new-trip" onClick={openNewTrip}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>
-          Buat Trip Baru
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {activeTrip && (
+            <button 
+              className="btn-new-trip" 
+              onClick={handleExportPDF} 
+              style={{ background: 'var(--purple)', color: 'white', border: 'none', boxShadow: '0 4px 15px rgba(139,92,246,0.3)' }}
+              title="Print PDF Planner"
+            >
+              🖨️ PDF
+            </button>
+          )}
+          <button className="btn-new-trip" onClick={openNewTrip}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>
+            Buat Trip Baru
+          </button>
+        </div>
       </div>
 
       {/* Tab Navigation */}
