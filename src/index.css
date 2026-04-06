@@ -294,10 +294,10 @@ body::before {
     padding: 8px 0;
   }
   .app-layout.has-sidebar .app-main {
-    margin-left: 0;
+    margin-left: 240px;
   }
   .app-layout.has-sidebar.sidebar-collapsed .app-main {
-    margin-left: 0;
+    margin-left: 64px;
   }
   .app-main {
     padding: 12px;
