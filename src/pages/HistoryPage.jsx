@@ -126,21 +126,6 @@ export default function HistoryPage() {
 
     return (
         <div className="history-container">
-            {/* TOPBAR */}
-            <div className="topbar">
-                <div className="topbar-right">
-                    <div className="date-pill">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        <strong>{time.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>
-                    </div>
-                    <div className="time-badge">
-                        <div className="pulse"></div>
-                        <span>{time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
-                        <span style={{color: 'rgba(16,217,180,0.6)', fontSize: '11px'}}>WIB</span>
-                    </div>
-                </div>
-            </div>
-
             {/* PAGE HEADER */}
             <div className="page-header">
                 <div className="page-title">
