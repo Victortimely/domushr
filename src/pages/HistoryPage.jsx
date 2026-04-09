@@ -278,7 +278,7 @@ export default function HistoryPage() {
                                 </div>
                                 <div className="time-col">
                                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                    {dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.')}
+                                    {dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':')}
                                 </div>
                                 <div className="admin-col">
                                     <div className="admin-name">
