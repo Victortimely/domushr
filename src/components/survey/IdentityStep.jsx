@@ -112,7 +112,7 @@ export default function IdentityStep({ data, updateField, updateFields }) {
 
             {/* Multi Surveyor */}
             <div className="form-group">
-                <label className="form-label">👤 Nama Surveyor</label>
+                <label className="form-label">👤 Nama Staff Vetting</label>
 
                 {/* Tags */}
                 <div style={{
@@ -146,7 +146,7 @@ export default function IdentityStep({ data, updateField, updateFields }) {
                     <input
                         className="form-input"
                         type="text"
-                        placeholder="Ketik nama surveyor lalu Enter..."
+                        placeholder="ketik nama staff vetting lalu enter..."
                         value={newSurveyor}
                         onChange={(e) => setNewSurveyor(e.target.value)}
                         onKeyDown={handleSurveyorKeyDown}
@@ -156,7 +156,7 @@ export default function IdentityStep({ data, updateField, updateFields }) {
                         ➕
                     </button>
                 </div>
-                <div className="form-hint">Tekan Enter untuk menambah surveyor. Bisa lebih dari satu orang.</div>
+                <div className="form-hint">Tekan Enter untuk menambah Staff Vetting. Bisa lebih dari satu orang.</div>
             </div>
 
             {/* Employee Select */}
