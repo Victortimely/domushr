@@ -14,7 +14,8 @@ export default function HistoryPage() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [time, setTime] = useState(new Date());
     const [showFilter, setShowFilter] = useState(false);
-    const [sort, setSort] = useState('newest');
+    const [sortField, setSortField] = useState('date');
+    const [sortDirection, setSortDirection] = useState('desc');
 
     useEffect(() => {
         loadSurveys();
@@ -93,18 +94,44 @@ export default function HistoryPage() {
             result = result.filter((s) => s.status === filterStatus);
         }
 
-        if (sort === 'newest') {
-            result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        } else if (sort === 'oldest') {
-            result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        } else if (sort === 'name_asc') {
-            result.sort((a, b) => String(a.employee_name || '').localeCompare(String(b.employee_name || '')));
-        } else if (sort === 'name_desc') {
-            result.sort((a, b) => String(b.employee_name || '').localeCompare(String(a.employee_name || '')));
-        }
+        result.sort((a, b) => {
+            let valA, valB;
+            if (sortField === 'employee') {
+                valA = String(a.employee_name || '').toLowerCase();
+                valB = String(b.employee_name || '').toLowerCase();
+            } else if (sortField === 'surveyor') {
+                valA = String(a.surveyor_name || '').toLowerCase();
+                valB = String(b.surveyor_name || '').toLowerCase();
+            } else if (sortField === 'status') {
+                valA = String(a.status || '').toLowerCase();
+                valB = String(b.status || '').toLowerCase();
+            } else {
+                // default date/time sorting falls to created_at
+                valA = new Date(a.created_at).getTime();
+                valB = new Date(b.created_at).getTime();
+            }
+
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
 
         setFiltered(result);
-    }, [search, filterStatus, surveys, sort]);
+    }, [search, filterStatus, surveys, sortField, sortDirection]);
+
+    const handleSort = (field) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection(field === 'date' ? 'desc' : 'asc');
+        }
+    };
+
+    const getSortIcon = (field) => {
+        if (sortField !== field) return <span style={{ opacity: 0.3, marginLeft: 4 }}>↕</span>;
+        return <span style={{ color: 'var(--accent)', marginLeft: 4, fontWeight: 'bold' }}>{sortDirection === 'asc' ? '↑' : '↓'}</span>;
+    };
 
     const counts = {
         all: surveys.length,
@@ -181,14 +208,11 @@ export default function HistoryPage() {
                 <div style={{ position: 'relative' }}>
                     <button className="filter-btn" onClick={() => setShowFilter(!showFilter)}>
                         <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                        Filter {sort !== 'newest' && <span style={{display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#3d8ef8', marginLeft: '4px'}}></span>}
+                        Filter <span style={{display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#3d8ef8', marginLeft: '4px'}}></span>
                     </button>
                     {showFilter && (
-                        <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', zIndex: 10, minWidth: '150px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-                            <button className={`tab ${sort === 'newest' ? 'active' : ''}`} style={{ width: '100%', textAlign: 'left', justifyContent: 'flex-start' }} onClick={() => { setSort('newest'); setShowFilter(false); }}>Terbaru</button>
-                            <button className={`tab ${sort === 'oldest' ? 'active' : ''}`} style={{ width: '100%', textAlign: 'left', justifyContent: 'flex-start' }} onClick={() => { setSort('oldest'); setShowFilter(false); }}>Terlama</button>
-                            <button className={`tab ${sort === 'name_asc' ? 'active' : ''}`} style={{ width: '100%', textAlign: 'left', justifyContent: 'flex-start' }} onClick={() => { setSort('name_asc'); setShowFilter(false); }}>Nama A-Z</button>
-                            <button className={`tab ${sort === 'name_desc' ? 'active' : ''}`} style={{ width: '100%', textAlign: 'left', justifyContent: 'flex-start' }} onClick={() => { setSort('name_desc'); setShowFilter(false); }}>Nama Z-A</button>
+                        <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px', zIndex: 10, minWidth: '180px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '12px', color: 'var(--text-dim)', textAlign: 'center' }}>
+                            <i>Gunakan klik langsung pada judul kolom tabel (Karyawan, Tanggal, dll) di bawah untuk memfilter urutan.</i>
                         </div>
                     )}
                 </div>
@@ -226,11 +250,21 @@ export default function HistoryPage() {
 
             {/* LIST HEADER */}
             <div className="list-header">
-                <span>Karyawan</span>
-                <span>Tanggal</span>
-                <span>Waktu</span>
-                <span>Surveyor</span>
-                <span style={{textAlign: 'right'}}>Status</span>
+                <button onClick={() => handleSort('employee')} className="sort-header">
+                    Karyawan {getSortIcon('employee')}
+                </button>
+                <button onClick={() => handleSort('date')} className="sort-header">
+                    Tanggal {getSortIcon('date')}
+                </button>
+                <button onClick={() => handleSort('date')} className="sort-header">
+                    Waktu {getSortIcon('date')}
+                </button>
+                <button onClick={() => handleSort('surveyor')} className="sort-header">
+                    Surveyor {getSortIcon('surveyor')}
+                </button>
+                <button onClick={() => handleSort('status')} className="sort-header" style={{textAlign: 'right', justifyContent: 'flex-end'}}>
+                    {getSortIcon('status')} Status
+                </button>
             </div>
 
             {/* SURVEY LIST */}

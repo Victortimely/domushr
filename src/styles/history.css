@@ -297,11 +297,32 @@
   padding: 0 20px 10px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-secondary);
-  letter-spacing: 0.8px;
   text-transform: uppercase;
+  color: var(--text-dim);
   border-bottom: 1px solid var(--border);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+.history-container .sort-header {
+  background: transparent;
+  color: inherit;
+  border: none;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: inherit;
+  text-transform: inherit;
+  display: flex;
+  align-items: center;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.history-container .sort-header:hover {
+  background: var(--surface2);
+  color: var(--text);
 }
 
 /* ── SURVEY CARDS ── */
