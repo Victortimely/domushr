@@ -480,6 +480,13 @@ export default function DashboardPage() {
                             ))}
                         </ZoomableGroup>
                     </ComposableMap>
+                    
+                    <div style={{ position: 'absolute', bottom: '16px', left: '16px', background: 'rgba(255, 255, 255, 0.9)', padding: '10px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', zIndex: 10 }}>
+                        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Karyawan</span>
+                        <span style={{ fontSize: '20px', fontWeight: 800, color: '#2563eb' }}>
+                            {mapCounts.reduce((sum, m) => sum + (parseInt(m.count) || 0), 0)}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Edit Menu Area — Master Only */}
