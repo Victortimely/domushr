@@ -39,7 +39,7 @@
   position: sticky; top: 0; z-index: 100;
   margin-left: -24px;
   margin-right: -24px;
-  margin-top: -24px;
+  margin-top: 0;
 }
 .employees-v2 .logo-mark {
   display: flex; align-items: center; gap: 10px;
