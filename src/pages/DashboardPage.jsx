@@ -382,7 +382,12 @@ export default function DashboardPage() {
 
                 {/* Bar Chart Card */}
                 <div className="card">
-                    <div className="card-title bar-card-title">Survey per Bulan</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <div className="card-title bar-card-title" style={{ marginBottom: 0 }}>Survey per Bulan</div>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent)', background: 'var(--purple-light)', padding: '2px 8px', borderRadius: '12px' }}>
+                            {new Date().getFullYear()}
+                        </div>
+                    </div>
                     <div className="card-subtitle">Bulan berjalan · rentang terpilih</div>
                     <BarChart data={monthlyData} />
                 </div>
