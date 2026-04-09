@@ -34,12 +34,31 @@ function LiveClock() {
     const seconds = String(now.getSeconds()).padStart(2, '0');
 
     return (
-        <div className="live-clock-bar">
-            <div className="live-clock-date">
-                📅 {dayName}, {date} {month} {year}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div className="live-clock-bar" style={{ flex: 1, marginBottom: 0 }}>
+                <div className="live-clock-date">
+                    📅 {dayName}, {date} {month} {year}
+                </div>
+                <div className="live-clock-time">
+                    🕐 {hours}:{minutes}:{seconds} WIB
+                </div>
             </div>
-            <div className="live-clock-time">
-                🕐 {hours}:{minutes}:{seconds} WIB
+            <div 
+                style={{ 
+                    background: 'rgba(139,92,246,0.15)', 
+                    color: '#a78bfa', 
+                    fontSize: '13px', 
+                    fontWeight: '600', 
+                    padding: '10px 20px', 
+                    borderRadius: '20px', 
+                    border: '1px solid rgba(139,92,246,0.3)',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                }}
+            >
+                ● Terhubung
             </div>
         </div>
     );

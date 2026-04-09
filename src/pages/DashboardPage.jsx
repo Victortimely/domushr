@@ -333,7 +333,6 @@ export default function DashboardPage() {
                     <h1>Survey Karyawan</h1>
                     <p>Dashboard & Monitoring</p>
                 </div>
-                <div className="badge-live" style={{ marginLeft: 'auto' }}>● Live</div>
             </div>
 
             <div className="filter-row">
