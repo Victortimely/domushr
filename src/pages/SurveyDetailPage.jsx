@@ -67,7 +67,7 @@ export default function SurveyDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                 <button className="btn btn-ghost btn-icon" onClick={() => navigate(-1)}>←</button>
                 <div style={{ flex: 1 }}>
-                    <h1 className="page-title" style={{ fontSize: '1.3rem' }}>{survey.employee_name}</h1>
+                    <h1 className="page-title" style={{ fontSize: '20px', color: '#ffffff', fontWeight: '700' }}>{survey.employee_name}</h1>
                     <p className="page-subtitle">SRV-{String(survey.id).padStart(4, '0')}</p>
                 </div>
                 <span className={`badge badge-${survey.status === 'draft' ? 'draft' : survey.status === 'verified' ? 'verified' : 'saved'}`}>

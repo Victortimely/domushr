@@ -179,8 +179,8 @@ export default function EmployeesPage() {
             {/* TOP NAV */}
             <div className="topnav">
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
-                        Data <span style={{ color: 'var(--accent)' }}>Karyawan</span>
+                    <h1 style={{ fontSize: '20px', fontWeight: '700', margin: 0, color: '#ffffff', letterSpacing: '-0.3px' }}>
+                        Data Karyawan
                     </h1>
                 </div>
                 <div className="topnav-right">
