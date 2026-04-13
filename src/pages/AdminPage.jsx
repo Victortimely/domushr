@@ -187,8 +187,8 @@ export default function AdminPage() {
                     </svg>
                 </div>
                 <div className="logo-info" style={{ display: 'flex', alignItems: 'center', marginLeft: '12px' }}>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                        Admin Master <span style={{ color: 'var(--purple, #8b5cf6)' }}>Panel</span>
+                    <h1 style={{ fontSize: '20px', fontWeight: '700', margin: 0, color: '#ffffff', letterSpacing: '-0.3px' }}>
+                        Admin Master Panel
                     </h1>
                 </div>
                 <div className="sp-nav-items" style={{ marginLeft: '2rem' }}>

@@ -1056,13 +1056,10 @@ body::before {
 }
 
 .page-title {
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 700;
   margin-bottom: 4px;
-  background: var(--gradient-1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ffffff;
 }
 
 .page-subtitle {

@@ -328,10 +328,9 @@ export default function DashboardPage() {
         <div className="dashboard-v2">
             {/* Header and Filter */}
             <div className="header" style={{ flexWrap: 'wrap' }}>
-                <div className="logo">S</div>
                 <div>
-                    <h1>Survey Karyawan</h1>
-                    <p>Dashboard & Monitoring</p>
+                    <h1>Dashboard</h1>
+                    <p>monitoring data vetting</p>
                 </div>
             </div>
 

@@ -61,19 +61,12 @@
 }
 
 .history-container .page-title h1 {
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.8px;
+  color: #ffffff;
+  letter-spacing: -0.3px;
   line-height: 1.1;
   margin: 0;
-}
-
-.history-container .page-title h1 span {
-  background: linear-gradient(90deg, #3d8ef8, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .history-container .page-title p {

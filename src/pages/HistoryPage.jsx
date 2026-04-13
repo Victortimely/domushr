@@ -156,7 +156,7 @@ export default function HistoryPage() {
             {/* PAGE HEADER */}
             <div className="page-header">
                 <div className="page-title">
-                    <h1>Riwayat <span>Survey</span></h1>
+                    <h1>Riwayat Survey</h1>
                     <p>{surveys.length} entri tercatat · Diperbarui baru saja</p>
                 </div>
                 <Link to="/survey/new" className="add-btn">
