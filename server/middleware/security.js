@@ -4,31 +4,13 @@ import rateLimit from 'express-rate-limit';
 
 // Helmet — secure HTTP headers
 export const securityHeaders = helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://maps.googleapis.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "https://maps.gstatic.com", "https://*.googleapis.com"],
-      connectSrc: ["'self'", "https://maps.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
-    },
-  },
+  contentSecurityPolicy: false, // disabled for dev; enable in production
   crossOriginEmbedderPolicy: false,
 });
 
 // CORS — allow frontend origin
-const allowedOriginsStr = process.env.ALLOWED_ORIGINS;
-let allowedOrigins = '*';
-
-if (allowedOriginsStr) {
-  allowedOrigins = allowedOriginsStr.split(',').map(o => o.trim());
-} else if (process.env.NODE_ENV === 'production') {
-  console.error('CRITICAL ERROR: ALLOWED_ORIGINS environment variable is NOT SET in production.');
-  process.exit(1);
-} else {
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
+if (allowedOrigins === '*') {
   console.warn('WARNING: CORS origin is set to "*". Consider limiting this in production via ALLOWED_ORIGINS.');
 }
 

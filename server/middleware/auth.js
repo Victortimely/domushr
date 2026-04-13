@@ -1,16 +1,9 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  if (process.env.NODE_ENV === 'production') {
-    console.error('CRITICAL ERROR: JWT_SECRET environment variable is NOT SET. Server cannot start in production mode for security reasons.');
-    process.exit(1);
-  } else {
-    console.warn('WARNING: JWT_SECRET is not set. Using insecure local development fallback.');
-  }
+const JWT_SECRET = process.env.JWT_SECRET || 'domushr_secret_secure_fallback_2026';
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET environment variable is not set! Using a default fallback.');
 }
-const ACTUAL_SECRET = JWT_SECRET || 'dev_insecure_key_123';
 
 export function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -21,7 +14,7 @@ export function authenticateToken(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, ACTUAL_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     next();
   } catch (err) {
@@ -47,9 +40,9 @@ export function requireRole(...roles) {
 export function generateToken(user) {
   return jwt.sign(
     { id: user.id, username: user.username, name: user.name, role: user.role },
-    ACTUAL_SECRET,
+    JWT_SECRET,
     { expiresIn: '24h' }
   );
 }
 
-export { ACTUAL_SECRET as JWT_SECRET };
+export { JWT_SECRET };

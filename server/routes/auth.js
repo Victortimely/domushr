@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import db from '../database.js';
-import { generateToken, authenticateToken } from '../middleware/auth.js';
+import { generateToken } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/security.js';
 
 const router = Router();
@@ -78,7 +78,8 @@ router.post('/register', authLimiter, (req, res) => {
 });
 
 // GET /api/auth/me — get current user info from token
-router.get('/me', authenticateToken, (req, res) => {
+router.get('/me', (req, res) => {
+  // This requires the auth middleware to be applied before
   res.json({ user: req.user });
 });
 

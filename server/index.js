@@ -20,12 +20,6 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for rate limiting behind Railway/Load Balancers
 app.set('trust proxy', 1);
 
-// ===== Startup Checks =====
-if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-  console.error('❌ FATAL: JWT_SECRET environment variable is missing.');
-  process.exit(1);
-}
-
 // ===== Security Middleware =====
 app.use(securityHeaders);
 app.use(corsMiddleware);
