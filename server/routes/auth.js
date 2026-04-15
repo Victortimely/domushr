@@ -2,12 +2,12 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import db from '../database.js';
 import { generateToken } from '../middleware/auth.js';
-import { authLimiter } from '../middleware/security.js';
 
 const router = Router();
 
 // POST /api/auth/login
-router.post('/login', authLimiter, (req, res) => {
+// Note: authLimiter is already applied at router mount level in server/index.js
+router.post('/login', (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -41,7 +41,7 @@ router.post('/login', authLimiter, (req, res) => {
 });
 
 // POST /api/auth/register — creates a pending registration request
-router.post('/register', authLimiter, (req, res) => {
+router.post('/register', (req, res) => {
   try {
     const { name, username, password } = req.body;
     if (!name || !username || !password) {

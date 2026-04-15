@@ -11,12 +11,13 @@ export const securityHeaders = helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "blob:"],
+      imgSrc: ["'self'", "data:", "blob:", "https://*.google.com", "https://*.googleapis.com"],
       connectSrc: ["'self'"],
-      mediaSrc: ["'none'"],
+      mediaSrc: ["'self'", "blob:", "data:"],
       objectSrc: ["'none'"],
-      childSrc: ["'none'"],
-      frameAncestors: ["'none'"],      // Replaces X-Frame-Options
+      childSrc: ["https://*.google.com", "https://*.googleapis.com"],
+      frameSrc: ["https://*.google.com", "https://*.googleapis.com"],
+      frameAncestors: ["'none'"],
       formAction: ["'self'"],
       baseUri: ["'self'"],
       upgradeInsecureRequests: [],
@@ -76,22 +77,19 @@ export function additionalSecurityHeaders(req, res, next) {
 }
 
 // ===== CORS — Strict Origin Control =====
-const DEFAULT_DEV_ORIGINS = [
+const DEFAULT_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:3001',
+  'https://domushr.vercel.app',
 ];
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : DEFAULT_DEV_ORIGINS;
-
-if (!process.env.ALLOWED_ORIGINS) {
-  console.warn(
-    '⚠️  WARNING: ALLOWED_ORIGINS not set. CORS restricted to localhost only.\n' +
-    '   Set ALLOWED_ORIGINS env var for production (e.g. "https://domushr.example.com").'
-  );
-}
+  ? [
+      ...process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
+      ...DEFAULT_ORIGINS,
+    ]
+  : DEFAULT_ORIGINS;
 
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
