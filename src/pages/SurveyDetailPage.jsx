@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { generateSurveyPDF } from '../services/pdfService';
@@ -11,6 +12,8 @@ export default function SurveyDetailPage() {
     const { user } = useAuth();
     const toast = useToast();
     const [survey, setSurvey] = useState(null);
+
+    usePageMeta(survey ? `Detail: ${survey.employee_name}` : 'Detail Survey', 'Detail hasil survey vetting karyawan — identitas, lokasi, foto, dan tanda tangan.');
 
     const isPrivileged = user?.role === 'master' || user?.role === 'admin';
 

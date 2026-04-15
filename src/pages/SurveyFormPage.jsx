@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +18,7 @@ const STEPS = [
 
 export default function SurveyFormPage() {
     const { id } = useParams();
+    usePageMeta(id && id !== 'new' ? 'Edit Survey' : 'Survey Baru', 'Formulir survey vetting karyawan — identitas, lokasi GPS, foto, rekaman audio, dan tanda tangan digital.');
     const navigate = useNavigate();
     const { user } = useAuth();
     const toast = useToast();

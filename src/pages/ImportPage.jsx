@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import {
@@ -11,6 +12,7 @@ import {
 } from '../services/excelService';
 
 export default function ImportPage() {
+    usePageMeta('Import & Export Data', 'Import data karyawan dan survey dari Excel, atau export seluruh data ke file Excel.');
     const { user } = useAuth();
     const toast = useToast();
     const [importType, setImportType] = useState('employees');

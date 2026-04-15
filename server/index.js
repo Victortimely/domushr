@@ -2,7 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { securityHeaders, corsMiddleware, generalLimiter, authLimiter } from './middleware/security.js';
+import { securityHeaders, additionalSecurityHeaders, corsMiddleware, generalLimiter, authLimiter } from './middleware/security.js';
+import { sanitizeInput } from './middleware/sanitize.js';
 import { authenticateToken } from './middleware/auth.js';
 import db from './database.js';
 import authRoutes from './routes/auth.js';
@@ -22,12 +23,16 @@ app.set('trust proxy', 1);
 
 // ===== Security Middleware =====
 app.use(securityHeaders);
+app.use(additionalSecurityHeaders);
 app.use(corsMiddleware);
 app.use(generalLimiter);
 
 // ===== Body Parsing =====
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ===== Input Sanitization (after body parsing) =====
+app.use(sanitizeInput);
 
 // ===== Static Files =====
 // Serve uploaded files
@@ -104,10 +109,19 @@ app.get('/', (req, res) => {
 
 // ===== Error Handling =====
 app.use((err, req, res, next) => {
+  // Log full error server-side but never expose stack traces to client
   console.error('Unhandled error:', err);
+
+  // CORS rejection
+  if (err.message && err.message.includes('not allowed by CORS')) {
+    return res.status(403).json({ error: 'Origin not allowed.' });
+  }
+
   if (err.type === 'entity.too.large') {
     return res.status(413).json({ error: 'File terlalu besar. Maksimal 10MB.' });
   }
+
+  // Generic error — never leak internal details
   res.status(500).json({ error: 'Internal server error.' });
 });
 
@@ -115,6 +129,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`\n🚀 DomusHR Backend running on http://localhost:${PORT}`);
   console.log(`📦 API: http://localhost:${PORT}/api`);
-  console.log(`🔒 Security: Helmet, CORS, Rate Limiting enabled`);
+  console.log(`🔒 Security: Helmet (CSP+HSTS+COOP/COEP/CORP), CORS, Rate Limiting, Input Sanitization enabled`);
   console.log(`💾 Database: SQLite (WAL mode)\n`);
 });

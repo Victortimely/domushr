@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from 'react-router-dom';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import api from '../services/api';
@@ -147,6 +148,7 @@ const initialMapData = [
 ];
 
 export default function DashboardPage() {
+    usePageMeta('Dashboard', 'Dashboard monitoring data vetting karyawan — statistik survey, peta sebaran, dan survey terbaru.');
     const { user } = useAuth();
     const toast = useToast();
     const [surveys, setSurveys] = useState([]);

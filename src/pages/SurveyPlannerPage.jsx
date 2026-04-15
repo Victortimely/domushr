@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import api from '../services/api';
 import { generateSurveyPlannerPDF } from '../services/pdfService';
 import { useToast } from '../context/ToastContext';
@@ -58,6 +59,7 @@ function generateId() {
    MAIN COMPONENT
    ───────────────────────────────────────────── */
 export default function SurveyPlannerPage() {
+  usePageMeta('Survey Planner', 'Rencanakan perjalanan vetting karyawan — kelola trip, itinerary, budget, dan packing list.');
   const toast = useToast();
   const [activeTab, setActiveTab] = useState('trips');
   const [employees, setEmployees] = useState([]);

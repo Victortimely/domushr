@@ -1,18 +1,30 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { seedDatabase } from './services/db';
 import { startAutoSync, isOnline } from './services/syncService';
 import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import HistoryPage from './pages/HistoryPage';
-import SurveyFormPage from './pages/SurveyFormPage';
-import SurveyDetailPage from './pages/SurveyDetailPage';
-import EmployeesPage from './pages/EmployeesPage';
-import ImportPage from './pages/ImportPage';
-import AdminPage from './pages/AdminPage';
-import SurveyPlannerPage from './pages/SurveyPlannerPage';
+
+// Lazy-loaded pages — code-split for smaller initial bundle
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const SurveyFormPage = lazy(() => import('./pages/SurveyFormPage'));
+const SurveyDetailPage = lazy(() => import('./pages/SurveyDetailPage'));
+const EmployeesPage = lazy(() => import('./pages/EmployeesPage'));
+const ImportPage = lazy(() => import('./pages/ImportPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const SurveyPlannerPage = lazy(() => import('./pages/SurveyPlannerPage'));
+
+// Lazy loading fallback
+function PageLoader() {
+    return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
+            <div className="spinner" style={{ width: 36, height: 36 }} />
+        </div>
+    );
+}
+
 
 function LiveClock() {
     const [now, setNow] = useState(new Date());
@@ -203,6 +215,7 @@ function AppContent() {
             {/* Main Content */}
             <main className="app-main">
                 <LiveClock />
+                <Suspense fallback={<PageLoader />}>
                 <Routes>
                     <Route path="/" element={<DashboardPage />} />
                     <Route path="/history" element={<HistoryPage />} />
@@ -215,6 +228,7 @@ function AppContent() {
                     <Route path="/admin" element={<AdminPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                </Suspense>
             </main>
 
             {/* Profile Modal */}

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -11,6 +12,7 @@ const BG_IMAGES = [
 ];
 
 export default function LoginPage() {
+    usePageMeta('Login', 'Masuk ke DomusHR — platform survey dan vetting karyawan berbasis web.');
     const { login } = useAuth();
     const bgImage = useMemo(() => BG_IMAGES[Math.floor(Math.random() * BG_IMAGES.length)], []);
     const [mode, setMode] = useState('login'); // 'login' or 'register'

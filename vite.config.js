@@ -7,11 +7,11 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.svg', 'robots.txt'],
+            includeAssets: ['favicon.svg', 'robots.txt', 'sitemap.xml'],
             manifest: {
-                name: 'DomusHR',
+                name: 'DomusHR — Aplikasi Survey & Vetting Karyawan',
                 short_name: 'DomusHR',
-                description: 'DomusHR - Aplikasi Survey Karyawan',
+                description: 'DomusHR - Platform survey dan vetting karyawan berbasis web',
                 theme_color: '#0f172a',
                 background_color: '#0f172a',
                 display: 'standalone',
@@ -39,6 +39,31 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        // Target modern browsers for smaller output
+        target: 'es2020',
+        // Manual chunk splitting for better long-term caching
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    // Core React vendor (rarely changes)
+                    if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router')) {
+                        return 'vendor-react';
+                    }
+                    // Heavy map library (d3 dependency tree is large)
+                    if (id.includes('node_modules/react-simple-maps') || id.includes('node_modules/d3-')) {
+                        return 'vendor-maps';
+                    }
+                    // PDF generation (only used on-demand)
+                    if (id.includes('node_modules/jspdf')) {
+                        return 'vendor-pdf';
+                    }
+                },
+            },
+        },
+        // Enable CSS code splitting
+        cssCodeSplit: true,
+    },
     server: {
         proxy: {
             '/api': {
@@ -52,3 +77,4 @@ export default defineConfig({
         },
     },
 })
+

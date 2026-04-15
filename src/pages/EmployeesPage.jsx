@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -40,6 +41,7 @@ function statusClass(s) {
 }
 
 export default function EmployeesPage() {
+    usePageMeta('Data Karyawan', 'Kelola database karyawan — tambah, edit, filter, dan hapus data karyawan perusahaan.');
     const { user } = useAuth();
     const toast = useToast();
     const [employees, setEmployees] = useState([]);

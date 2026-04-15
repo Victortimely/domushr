@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import '../styles/history.css';
 
 export default function HistoryPage() {
+    usePageMeta('Riwayat Survey', 'Lihat dan kelola riwayat seluruh survey vetting karyawan — filter, sortir, dan verifikasi data.');
     const { user } = useAuth();
     const toast = useToast();
     const [surveys, setSurveys] = useState([]);
