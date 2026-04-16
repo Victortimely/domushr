@@ -163,8 +163,21 @@ export default function DashboardPage() {
     const [newMarker, setNewMarker] = useState({ name: '', lat: 0, lng: 118, count: 0 });
     const [mapZoom, setMapZoom] = useState(1);
 
+    // Branch data — separate from map markers
+    const initialBranches = [
+        { id: 'b1', name: 'Ciracas', count: 20, color: '#8b5cf6' },
+        { id: 'b2', name: 'Joglo', count: 14, color: '#10b981' },
+        { id: 'b3', name: 'Bekasi', count: 18, color: '#f59e0b' },
+        { id: 'b4', name: 'Palembang', count: 15, color: '#ef4444' },
+        { id: 'b5', name: 'Tanjung Pandan', count: 8, color: '#06b6d4' },
+    ];
+    const [branchData, setBranchData] = useState(initialBranches);
+    const [newBranch, setNewBranch] = useState({ name: '', count: 0 });
+    const branchColors = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16'];
+
     useEffect(() => {
         loadMapData();
+        loadBranchData();
         loadData();
     }, []);
 
@@ -182,6 +195,52 @@ export default function DashboardPage() {
             setMapCounts(initialMapData);
         }
     }
+
+    async function loadBranchData() {
+        try {
+            const data = await api.get('/settings/branchLocations');
+            if (data && data.value) {
+                setBranchData(JSON.parse(data.value));
+            }
+        } catch (err) {
+            console.error('Failed to load branch data, using initial:', err);
+        }
+    }
+
+    const handleSaveBranches = async () => {
+        try {
+            await api.put('/settings/branchLocations', { value: JSON.stringify(branchData) });
+            toast.success('Data cabang berhasil disimpan');
+        } catch (err) {
+            toast.error('Gagal menyimpan data cabang: ' + err.message);
+        }
+    };
+
+    const updateBranchCount = (id, newCount) => {
+        setBranchData(prev => prev.map(b => b.id === id ? { ...b, count: newCount } : b));
+    };
+
+    const handleAddBranch = (e) => {
+        e.preventDefault();
+        if (!newBranch.name.trim()) {
+            toast.error('Nama cabang tidak boleh kosong');
+            return;
+        }
+        const branch = {
+            id: 'b' + Date.now(),
+            name: newBranch.name.trim(),
+            count: parseInt(newBranch.count) || 0,
+            color: branchColors[branchData.length % branchColors.length],
+        };
+        setBranchData(prev => [...prev, branch]);
+        setNewBranch({ name: '', count: 0 });
+        toast.success(`Cabang ${branch.name} ditambahkan (Klik simpan untuk permanen)`);
+    };
+
+    const handleDeleteBranch = (id) => {
+        setBranchData(prev => prev.filter(b => b.id !== id));
+        toast.success('Cabang dihapus (Klik simpan untuk permanen)');
+    };
 
     const handleSaveMap = async () => {
         try {
@@ -500,17 +559,12 @@ export default function DashboardPage() {
                             </span>
                         </div>
                         {/* Branch Location Boxes */}
-                        {['Ciracas', 'Joglo', 'Bekasi', 'Palembang', 'Tanjung Pandan'].map(branch => {
-                            const found = mapCounts.find(m => m.name.toLowerCase() === branch.toLowerCase());
-                            const count = found ? (parseInt(found.count) || 0) : 0;
-                            const colors = { 'Ciracas': '#8b5cf6', 'Joglo': '#10b981', 'Bekasi': '#f59e0b', 'Palembang': '#ef4444', 'Tanjung Pandan': '#06b6d4' };
-                            return (
-                                <div key={branch} style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '8px 12px', borderRadius: '10px', border: `1px solid ${colors[branch]}30`, display: 'flex', flexDirection: 'column', gap: '1px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', minWidth: '80px', textAlign: 'center' }}>
-                                    <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px', lineHeight: 1.2 }}>{branch}</span>
-                                    <span style={{ fontSize: '16px', fontWeight: 800, color: colors[branch] }}>{count}</span>
-                                </div>
-                            );
-                        })}
+                        {branchData.map(branch => (
+                            <div key={branch.id} style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '8px 12px', borderRadius: '10px', border: `1px solid ${branch.color}30`, display: 'flex', flexDirection: 'column', gap: '1px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', minWidth: '80px', textAlign: 'center' }}>
+                                <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px', lineHeight: 1.2 }}>{branch.name}</span>
+                                <span style={{ fontSize: '16px', fontWeight: 800, color: branch.color }}>{branch.count}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -572,6 +626,60 @@ export default function DashboardPage() {
                                 <input className="form-input" type="number" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newMarker.count} onChange={(e) => setNewMarker({...newMarker, count: Number(e.target.value)})} />
                             </div>
                             <button className="btn btn-primary" onClick={handleAddMarker} style={{ padding: '8px 16px', height: '38px', borderRadius: '8px' }}>+ Tambah</button>
+                        </div>
+                    </>
+                )}
+
+                {/* Branch Editor — Master/Admin */}
+                {(user?.role === 'master' || user?.role === 'admin') && (
+                    <>
+                        <hr style={{ border: 'none', borderBottom: '1px solid var(--border)', margin: '24px 0' }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0 }}>🏢 Edit Cabang</h2>
+                            <button className="btn btn-primary" onClick={handleSaveBranches} style={{ background: 'var(--accent)', border: 'none', padding: '6px 16px', borderRadius: '8px', fontSize: '13px' }}>
+                                💾 Simpan Data Cabang
+                            </button>
+                        </div>
+
+                        {/* Branch List Editor */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+                            {branchData.map(branch => (
+                                <div key={branch.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface2)', padding: '10px 14px', borderRadius: '10px', border: `1px solid ${branch.color}25` }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: branch.color, flexShrink: 0 }}></div>
+                                        <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{branch.name}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <input 
+                                            type="number" 
+                                            value={branch.count} 
+                                            onChange={(e) => updateBranchCount(branch.id, parseInt(e.target.value) || 0)}
+                                            title="Jumlah Karyawan"
+                                            style={{ width: '60px', background: 'var(--bg)', border: `1px solid ${branch.color}`, color: 'var(--text)', padding: '6px', borderRadius: '6px', textAlign: 'center', fontWeight: 'bold' }}
+                                        />
+                                        <button 
+                                            onClick={() => handleDeleteBranch(branch.id)}
+                                            style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '16px', padding: '4px' }}
+                                            title="Hapus Cabang"
+                                        >
+                                            ✖
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Add New Branch Form */}
+                        <div style={{ background: 'var(--surface2)', padding: '14px 16px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                            <div style={{ flex: '1 1 180px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Nama Cabang</label>
+                                <input className="form-input" style={{ background: 'var(--bg)', padding: '8px 12px' }} placeholder="Cth: Cabang Depok" value={newBranch.name} onChange={(e) => setNewBranch({...newBranch, name: e.target.value})} />
+                            </div>
+                            <div style={{ width: '100px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-dim)', marginBottom: '6px' }}>Jml. Karyawan</label>
+                                <input className="form-input" type="number" style={{ background: 'var(--bg)', padding: '8px 12px' }} value={newBranch.count} onChange={(e) => setNewBranch({...newBranch, count: Number(e.target.value)})} />
+                            </div>
+                            <button className="btn btn-primary" onClick={handleAddBranch} style={{ padding: '8px 16px', height: '38px', borderRadius: '8px' }}>+ Tambah Cabang</button>
                         </div>
                     </>
                 )}
