@@ -74,7 +74,7 @@
   font-size: 18px; font-weight: 800; color: #fff;
 }
 .dashboard-v2 .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin: 0; }
-.dashboard-v2 .header p  { font-size: 12px; color: var(--text-dim); margin: 2px 0 0 0; }
+.dashboard-v2 .header .page-subtitle { font-size: 0.9rem; color: var(--text-secondary); margin: 2px 0 0 0; }
 .dashboard-v2 .badge-live {
   margin-left: auto;
   background: var(--purple-light);

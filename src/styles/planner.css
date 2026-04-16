@@ -51,8 +51,8 @@
 .planner-v2 .page-header h1 {
   font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.3px; color: #ffffff;
 }
-.planner-v2 .page-header .subtitle {
-  font-size: 12px; color: var(--text-dim); margin: 2px 0 0 0;
+.planner-v2 .page-header .page-subtitle {
+  font-size: 0.9rem; color: var(--text-secondary); margin: 2px 0 0 0;
 }
 .planner-v2 .page-header .btn-new-trip {
   display: flex; align-items: center; gap: 8px;
