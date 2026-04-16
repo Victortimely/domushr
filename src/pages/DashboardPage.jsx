@@ -125,7 +125,7 @@ const initialMapData = [
     { id: 3, name: 'Sumatera Barat', lat: -0.5, lng: 100.5, count: 8 },
     { id: 4, name: 'Riau', lat: 0.5, lng: 101.5, count: 4 },
     { id: 5, name: 'Jambi', lat: -1.5, lng: 103.5, count: 6 },
-    { id: 6, name: 'Sumsel', lat: -3.0, lng: 104.5, count: 15 },
+    { id: 6, name: 'Palembang', lat: -2.95, lng: 104.75, count: 15 },
     { id: 7, name: 'Lampung', lat: -4.5, lng: 105.0, count: 10 },
     { id: 8, name: 'Banten', lat: -6.4, lng: 106.1, count: 8 },
     { id: 9, name: 'DKI Jakarta', lat: -6.2, lng: 106.8, count: 45 },
@@ -145,6 +145,10 @@ const initialMapData = [
     { id: 23, name: 'Maluku', lat: -3.0, lng: 129.5, count: 5 },
     { id: 24, name: 'Papua Barat', lat: -1.5, lng: 132.5, count: 6 },
     { id: 25, name: 'Papua', lat: -4.0, lng: 139.0, count: 15 },
+    { id: 26, name: 'Ciracas', lat: -6.35, lng: 106.88, count: 20 },
+    { id: 27, name: 'Joglo', lat: -6.19, lng: 106.73, count: 14 },
+    { id: 28, name: 'Bekasi', lat: -6.24, lng: 107.0, count: 18 },
+    { id: 29, name: 'Tanjung Pandan', lat: -2.75, lng: 107.63, count: 8 },
 ];
 
 export default function DashboardPage() {
@@ -487,11 +491,26 @@ export default function DashboardPage() {
                         </ZoomableGroup>
                     </ComposableMap>
                     
-                    <div style={{ position: 'absolute', bottom: '16px', left: '16px', background: 'rgba(255, 255, 255, 0.9)', padding: '10px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', zIndex: 10 }}>
-                        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Karyawan</span>
-                        <span style={{ fontSize: '20px', fontWeight: 800, color: '#2563eb' }}>
-                            {mapCounts.reduce((sum, m) => sum + (parseInt(m.count) || 0), 0)}
-                        </span>
+                    <div style={{ position: 'absolute', bottom: '16px', left: '16px', display: 'flex', gap: '10px', alignItems: 'flex-end', zIndex: 10, flexWrap: 'wrap', maxWidth: 'calc(100% - 32px)' }}>
+                        {/* Total Karyawan Box */}
+                        <div style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '10px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Karyawan</span>
+                            <span style={{ fontSize: '20px', fontWeight: 800, color: '#2563eb' }}>
+                                {mapCounts.reduce((sum, m) => sum + (parseInt(m.count) || 0), 0)}
+                            </span>
+                        </div>
+                        {/* Branch Location Boxes */}
+                        {['Ciracas', 'Joglo', 'Bekasi', 'Palembang', 'Tanjung Pandan'].map(branch => {
+                            const found = mapCounts.find(m => m.name.toLowerCase() === branch.toLowerCase());
+                            const count = found ? (parseInt(found.count) || 0) : 0;
+                            const colors = { 'Ciracas': '#8b5cf6', 'Joglo': '#10b981', 'Bekasi': '#f59e0b', 'Palembang': '#ef4444', 'Tanjung Pandan': '#06b6d4' };
+                            return (
+                                <div key={branch} style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '8px 12px', borderRadius: '10px', border: `1px solid ${colors[branch]}30`, display: 'flex', flexDirection: 'column', gap: '1px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', minWidth: '80px', textAlign: 'center' }}>
+                                    <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px', lineHeight: 1.2 }}>{branch}</span>
+                                    <span style={{ fontSize: '16px', fontWeight: 800, color: colors[branch] }}>{count}</span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
