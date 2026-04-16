@@ -21,6 +21,7 @@ const JABATAN_COLORS = {
   'Teller':           { bg:'rgba(139,92,246,0.15)',  color:'#a78bfa' },
   'Cleaning Service': { bg:'rgba(52,211,153,0.15)',  color:'#34d399' },
   'Leader':           { bg:'rgba(251,191,36,0.15)',  color:'#fbbf24' },
+  'Supervisor':       { bg:'rgba(244,114,182,0.15)', color:'#f472b6' },
 };
 const AVATAR_COLORS = [
   'linear-gradient(135deg,#6477f0,#8b5cf6)',
@@ -218,6 +219,7 @@ export default function EmployeesPage() {
                         <option value="Teller">Teller</option>
                         <option value="Cleaning Service">Cleaning Service</option>
                         <option value="Leader">Leader</option>
+                        <option value="Supervisor">Supervisor</option>
                     </select>
                     <select className="filter-select" value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
                         <option value="">Semua Status</option>
@@ -368,6 +370,7 @@ export default function EmployeesPage() {
                                         <option value="Teller">Teller</option>
                                         <option value="Cleaning Service">Cleaning Service</option>
                                         <option value="Leader">Leader</option>
+                                        <option value="Supervisor">Supervisor</option>
                                     </select>
                                 </div>
                             </div>
