@@ -135,7 +135,7 @@ export default function LoginPage() {
                             <span>📷</span> Dokumentasi Foto
                         </div>
                         <div className="login-brand-feature">
-                            <span>✍️</span> Tanda Tangan Digital
+                            <span>🗺️</span> Peta Sebaran Karyawan
                         </div>
                         <div className="login-brand-feature">
                             <span>📊</span> Laporan Otomatis
