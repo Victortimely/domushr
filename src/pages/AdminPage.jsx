@@ -130,27 +130,31 @@ export default function AdminPage() {
     const recentActivities = useMemo(() => {
         const activities = [];
         regRequests.forEach(req => {
+            // For pending: show when request was created; for approved/rejected: show when action was taken
+            const actionTime = (req.status !== 'pending' && req.resolved_at) ? req.resolved_at : (req.created_at || req.createdAt);
             activities.push({
                 id: `reg-${req.id}`,
                 name: req.name,
                 initials: req.name?.[0] || '?',
                 activity: 'Pembuatan Akun (' + (req.status === 'pending' ? 'Pending' : req.status === 'approved' ? 'Disetujui' : 'Ditolak') + ')',
-                time: req.created_at ? new Date(req.created_at).toLocaleString('id-ID') : 'Baru saja',
+                time: actionTime ? new Date(actionTime).toLocaleString('id-ID') : 'Baru saja',
                 status: req.status === 'approved' ? 'b-approved' : req.status === 'rejected' ? 'b-rejected' : 'b-pending',
                 statusLabel: req.status === 'approved' ? 'Berhasil' : req.status === 'rejected' ? 'Ditolak' : 'Menunggu',
-                timestamp: req.created_at ? new Date(req.created_at).getTime() : Date.now()
+                timestamp: actionTime ? new Date(actionTime).getTime() : Date.now()
             });
         });
         requests.forEach(req => {
+            // For pending: show when request was created; for resolved: show when password was reset
+            const actionTime = (req.status !== 'pending' && req.resolved_at) ? req.resolved_at : (req.created_at || req.createdAt);
             activities.push({
                 id: `pwd-${req.id}`,
-                name: req.userName || 'User',
-                initials: req.userName?.[0] || '?',
+                name: req.user_name || req.userName || 'User',
+                initials: (req.user_name || req.userName)?.[0] || '?',
                 activity: 'Reset Password',
-                time: req.created_at ? new Date(req.created_at).toLocaleString('id-ID') : 'Baru saja',
-                status: req.status === 'resolved' ? 'b-approved' : 'b-pending',
-                statusLabel: req.status === 'resolved' ? 'Berhasil' : 'Menunggu',
-                timestamp: req.created_at ? new Date(req.created_at).getTime() : Date.now()
+                time: actionTime ? new Date(actionTime).toLocaleString('id-ID') : 'Baru saja',
+                status: req.status === 'approved' || req.status === 'resolved' ? 'b-approved' : 'b-pending',
+                statusLabel: req.status === 'approved' || req.status === 'resolved' ? 'Berhasil' : 'Menunggu',
+                timestamp: actionTime ? new Date(actionTime).getTime() : Date.now()
             });
         });
         return activities.sort((a,b) => b.timestamp - a.timestamp).slice(0, 5);
