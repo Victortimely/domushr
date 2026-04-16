@@ -198,8 +198,8 @@ body::before {
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   transition: var(--transition);
   border: none;
   background: none;
