@@ -417,7 +417,7 @@ export default function SurveyPlannerPage() {
           <div className="title-icon">🗺️</div>
           <div>
             <h1>Survey Planner</h1>
-            <p className="subtitle">Rencanakan perjalanan vetting karyawan</p>
+            <p className="page-subtitle">Rencanakan perjalanan vetting karyawan</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>

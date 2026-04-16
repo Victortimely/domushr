@@ -395,7 +395,7 @@ export default function DashboardPage() {
             <div className="header" style={{ flexWrap: 'wrap' }}>
                 <div>
                     <h1>Dashboard</h1>
-                    <p>monitoring data vetting</p>
+                    <p className="page-subtitle">monitoring data vetting</p>
                 </div>
             </div>
 
