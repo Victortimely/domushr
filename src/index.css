@@ -1784,3 +1784,121 @@ body::before {
   color: white;
 }
 
+/* ============= LOGOUT OVERLAY ============= */
+.logout-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 6, 23, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  animation: logout-fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes logout-fade-in {
+  0% {
+    background: rgba(2, 6, 23, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  100% {
+    background: rgba(2, 6, 23, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+.logout-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: logout-content-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+
+@keyframes logout-content-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.logout-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.05) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: logout-icon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes logout-icon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3), 0 0 30px rgba(239, 68, 68, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 16px rgba(239, 68, 68, 0), 0 0 50px rgba(239, 68, 68, 0.2);
+  }
+}
+
+.logout-icon {
+  width: 32px;
+  height: 32px;
+  stroke: #ef4444;
+  stroke-width: 2;
+  animation: logout-icon-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes logout-icon-slide {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+
+.logout-spinner-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(148, 163, 184, 0.15);
+  border-top-color: var(--accent);
+  border-right-color: rgba(139, 92, 246, 0.6);
+  animation: logout-spin 1s linear infinite;
+}
+
+@keyframes logout-spin {
+  to { transform: rotate(360deg); }
+}
+
+.logout-text {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  animation: logout-text-fade 0.5s ease 0.4s both;
+}
+
+.logout-subtext {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  animation: logout-text-fade 0.5s ease 0.7s both;
+}
+
+@keyframes logout-text-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -77,7 +77,7 @@ function LiveClock() {
 }
 
 function AppContent() {
-    const { user, loading, logout, updateUsername, updateName } = useAuth();
+    const { user, loading, logout, loggingOut, updateUsername, updateName } = useAuth();
     const toast = useToast();
     const [online, setOnline] = useState(isOnline());
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -251,6 +251,24 @@ function AppContent() {
                             <button className="btn btn-secondary" onClick={() => setShowProfileModal(false)} style={{ flex: 1 }}>Batal</button>
                             <button className="btn btn-primary" onClick={handleSaveProfile} style={{ flex: 1 }}>💾 Simpan</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Logout Overlay */}
+            {loggingOut && (
+                <div className="logout-overlay">
+                    <div className="logout-overlay-content">
+                        <div className="logout-icon-wrap">
+                            <svg className="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                        </div>
+                        <div className="logout-spinner-ring"></div>
+                        <p className="logout-text">Keluar dari akun...</p>
+                        <p className="logout-subtext">Sampai jumpa kembali 👋</p>
                     </div>
                 </div>
             )}

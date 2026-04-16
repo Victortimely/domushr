@@ -6,6 +6,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [loggingOut, setLoggingOut] = useState(false);
 
     useEffect(() => {
         // Restore user from localStorage
@@ -29,10 +30,14 @@ export function AuthProvider({ children }) {
     };
 
     const logout = async () => {
+        setLoggingOut(true);
+        // Wait for the logout animation to play
+        await new Promise(resolve => setTimeout(resolve, 1800));
         setUser(null);
         api.setToken(null);
         localStorage.removeItem('domushr_user');
         localStorage.removeItem('domushr_token');
+        setLoggingOut(false);
     };
 
     const updateUsername = async (newUsername) => {
@@ -52,7 +57,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, updateUsername, updateName }}>
+        <AuthContext.Provider value={{ user, login, logout, loading, loggingOut, updateUsername, updateName }}>
             {children}
         </AuthContext.Provider>
     );
