@@ -573,7 +573,9 @@ export default function DashboardPage() {
                                 }
                             </Geographies>
 
-                            {(mapType === 'all' ? mapCounts : unvettedMapCounts).map(marker => {
+                            {(mapType === 'all' ? mapCounts : unvettedMapCounts)
+                                .filter(marker => mapType === 'all' || !['Ciracas', 'Joglo', 'Bekasi', 'Palembang', 'Tanjung Pandan', 'Jakarta'].includes(marker.name))
+                                .map(marker => {
                                 const pinColor = mapType === 'all' ? '#2563eb' : '#eab308';
                                 const pulseColor = mapType === 'all' ? 'rgba(37, 99, 235, 0.4)' : 'rgba(234, 179, 8, 0.4)';
                                 
@@ -617,7 +619,9 @@ export default function DashboardPage() {
                                 {mapType === 'all' ? 'Total Karyawan' : 'Total Karyawan belum di vetting'}
                             </span>
                             <span style={{ fontSize: '20px', fontWeight: 800, color: mapType === 'all' ? '#2563eb' : '#eab308' }}>
-                                {(mapType === 'all' ? mapCounts : unvettedMapCounts).reduce((sum, m) => sum + (parseInt(m.count) || 0), 0)}
+                                {(mapType === 'all' ? mapCounts : unvettedMapCounts)
+                                    .filter(marker => mapType === 'all' || !['Ciracas', 'Joglo', 'Bekasi', 'Palembang', 'Tanjung Pandan', 'Jakarta'].includes(marker.name))
+                                    .reduce((sum, m) => sum + (parseInt(m.count) || 0), 0)}
                             </span>
                         </div>
                         {/* Branch Location Boxes */}
@@ -643,7 +647,9 @@ export default function DashboardPage() {
                         
                         {/* Data List Editor */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px', maxHeight: '250px', overflowY: 'auto', paddingRight: '8px' }}>
-                            {(mapType === 'all' ? mapCounts : unvettedMapCounts).map(marker => (
+                            {(mapType === 'all' ? mapCounts : unvettedMapCounts)
+                                .filter(marker => mapType === 'all' || !['Ciracas', 'Joglo', 'Bekasi', 'Palembang', 'Tanjung Pandan', 'Jakarta'].includes(marker.name))
+                                .map(marker => (
                                 <div key={marker.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                         <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{marker.name}</span>
