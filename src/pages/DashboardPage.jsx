@@ -614,14 +614,14 @@ export default function DashboardPage() {
                         {/* Total Karyawan Box */}
                         <div style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '10px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
                             <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                {mapType === 'all' ? 'Total Karyawan' : 'Total Belum Vetting'}
+                                {mapType === 'all' ? 'Total Karyawan' : 'Total Karyawan belum di vetting'}
                             </span>
                             <span style={{ fontSize: '20px', fontWeight: 800, color: mapType === 'all' ? '#2563eb' : '#eab308' }}>
                                 {(mapType === 'all' ? mapCounts : unvettedMapCounts).reduce((sum, m) => sum + (parseInt(m.count) || 0), 0)}
                             </span>
                         </div>
                         {/* Branch Location Boxes */}
-                        {branchData.map(branch => (
+                        {mapType === 'all' && branchData.map(branch => (
                             <div key={branch.id} style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '8px 12px', borderRadius: '10px', border: `1px solid ${branch.color}30`, display: 'flex', flexDirection: 'column', gap: '1px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', minWidth: '80px', textAlign: 'center' }}>
                                 <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px', lineHeight: 1.2 }}>{branch.name}</span>
                                 <span style={{ fontSize: '16px', fontWeight: 800, color: branch.color }}>{branch.count}</span>
