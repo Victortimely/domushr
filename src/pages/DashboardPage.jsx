@@ -160,6 +160,8 @@ export default function DashboardPage() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [mapCounts, setMapCounts] = useState([]);
+    const [unvettedMapCounts, setUnvettedMapCounts] = useState([]);
+    const [mapType, setMapType] = useState('all');
     const [newMarker, setNewMarker] = useState({ name: '', lat: 0, lng: 118, count: 0 });
     const [mapZoom, setMapZoom] = useState(1);
 
@@ -193,6 +195,19 @@ export default function DashboardPage() {
         } catch (err) {
             console.error('Failed to load map data from API, using initial:', err);
             setMapCounts(initialMapData);
+        }
+        
+        try {
+            const unvetted = await api.get('/settings/unvettedMapData');
+            if (unvetted && unvetted.value) {
+                const parsedUnvetted = JSON.parse(unvetted.value);
+                setUnvettedMapCounts(parsedUnvetted);
+            } else {
+                setUnvettedMapCounts(initialMapData.map(m => ({...m, count: 0})));
+            }
+        } catch (err) {
+            console.error('Failed to load unvetted map data from API, using empty:', err);
+            setUnvettedMapCounts(initialMapData.map(m => ({...m, count: 0})));
         }
     }
 
@@ -244,16 +259,26 @@ export default function DashboardPage() {
 
     const handleSaveMap = async () => {
         try {
-            await api.put('/settings/indonesiaMapData', { value: JSON.stringify(mapCounts) });
-            toast.success('Peta sebaran karyawan berhasil disimpan ke database');
+            if (mapType === 'all') {
+                await api.put('/settings/indonesiaMapData', { value: JSON.stringify(mapCounts) });
+                toast.success('Peta sebaran karyawan berhasil disimpan ke database');
+            } else {
+                await api.put('/settings/unvettedMapData', { value: JSON.stringify(unvettedMapCounts) });
+                toast.success('Peta karyawan belum vetting berhasil disimpan ke database');
+            }
         } catch (err) {
             toast.error('Gagal menyimpan peta: ' + err.message);
         }
     };
 
     const updateMapCount = (id, newCount) => {
-        const updated = mapCounts.map(m => m.id === id ? { ...m, count: newCount } : m);
-        setMapCounts(updated);
+        if (mapType === 'all') {
+            const updated = mapCounts.map(m => m.id === id ? { ...m, count: newCount } : m);
+            setMapCounts(updated);
+        } else {
+            const updated = unvettedMapCounts.map(m => m.id === id ? { ...m, count: newCount } : m);
+            setUnvettedMapCounts(updated);
+        }
     };
 
     const handleAddMarker = (e) => {
@@ -269,15 +294,25 @@ export default function DashboardPage() {
             lng: parseFloat(newMarker.lng),
             count: parseInt(newMarker.count) || 0
         };
-        const updated = [...mapCounts, marker];
-        setMapCounts(updated);
+        if (mapType === 'all') {
+            const updated = [...mapCounts, marker];
+            setMapCounts(updated);
+        } else {
+            const updated = [...unvettedMapCounts, marker];
+            setUnvettedMapCounts(updated);
+        }
         setNewMarker({ name: '', lat: 0, lng: 118, count: 0 });
         toast.success(`Titik lokasi ${marker.name} ditambahkan (Klik simpan untuk permanen)`);
     };
 
     const handleDeleteMarker = (id) => {
-        const updated = mapCounts.filter(m => m.id !== id);
-        setMapCounts(updated);
+        if (mapType === 'all') {
+            const updated = mapCounts.filter(m => m.id !== id);
+            setMapCounts(updated);
+        } else {
+            const updated = unvettedMapCounts.filter(m => m.id !== id);
+            setUnvettedMapCounts(updated);
+        }
         toast.success('Lokasi dihapus (Klik simpan untuk permanen)');
     };
 
@@ -478,7 +513,27 @@ export default function DashboardPage() {
 
             {/* Vector Map Section */}
             <div className="card" style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: '24px', padding: '24px' }}>
-                <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0, marginBottom:'16px' }}>📍 Peta Sebaran Karyawan</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                    <h2 className="card-title" style={{ fontSize: '15px', color:'var(--text)', textTransform:'none', margin:0 }}>
+                        {mapType === 'all' ? '📍 Peta Sebaran Karyawan' : '📍 Peta Karyawan Belum Vetting'}
+                    </h2>
+                    <div className="map-toggle" style={{ display: 'flex', background: 'var(--surface)', borderRadius: '12px', padding: '4px', gap: '4px', border: '1px solid var(--border)' }}>
+                        <button 
+                            className={`btn btn-sm ${mapType === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+                            onClick={() => setMapType('all')}
+                            style={{ padding: '6px 12px', borderRadius: '8px', fontSize: '12px', background: mapType === 'all' ? '#2563eb' : 'transparent', border: 'none', color: mapType === 'all' ? '#fff' : 'var(--text-dim)' }}
+                        >
+                            Total Karyawan
+                        </button>
+                        <button 
+                            className={`btn btn-sm ${mapType === 'unvetted' ? 'btn-primary' : 'btn-ghost'}`}
+                            onClick={() => setMapType('unvetted')}
+                            style={{ padding: '6px 12px', borderRadius: '8px', fontSize: '12px', background: mapType === 'unvetted' ? '#eab308' : 'transparent', border: 'none', color: mapType === 'unvetted' ? '#fff' : 'var(--text-dim)' }}
+                        >
+                            Belum Vetting
+                        </button>
+                    </div>
+                </div>
                 
                 {/* Visual Map Area */}
                 <div style={{ position: 'relative', width: '100%', minHeight: '400px', background: '#ffffff', borderRadius: '16px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -518,44 +573,51 @@ export default function DashboardPage() {
                                 }
                             </Geographies>
 
-                            {mapCounts.map(marker => (
-                                <Marker key={marker.id} coordinates={[marker.lng, marker.lat]}>
-                                    <g className="map-pin-group" transform={`scale(${1 / mapZoom})`} style={{ cursor: 'pointer' }}>
-                                        {/* Pulse Animation (Native SVG) */}
-                                        <circle cx={0} cy={0} r={8} fill="rgba(37, 99, 235, 0.4)">
-                                            <animate attributeName="r" from="4" to="16" dur="2s" repeatCount="indefinite" />
-                                            <animate attributeName="opacity" from="1" to="0" dur="2s" repeatCount="indefinite" />
-                                        </circle>
-                                        {/* Pin Core */}
-                                        <circle cx={0} cy={0} r={4} fill="#2563eb" stroke="#ffffff" strokeWidth={1.5} />
-                                        
-                                        {/* Permanent Text Label Below Pin */}
-                                        <text
-                                            textAnchor="middle"
-                                            y={14}
-                                            style={{ fontFamily: "Inter", fontSize: "10px", fontWeight: 700, fill: "#1e293b", textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
-                                        >
-                                            {marker.name}
-                                        </text>
-                                        <text
-                                            textAnchor="middle"
-                                            y={26}
-                                            style={{ fontFamily: "Inter", fontSize: "12px", fontWeight: 800, fill: "#2563eb", textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
-                                        >
-                                            {marker.count}
-                                        </text>
-                                    </g>
-                                </Marker>
-                            ))}
+                            {(mapType === 'all' ? mapCounts : unvettedMapCounts).map(marker => {
+                                const pinColor = mapType === 'all' ? '#2563eb' : '#eab308';
+                                const pulseColor = mapType === 'all' ? 'rgba(37, 99, 235, 0.4)' : 'rgba(234, 179, 8, 0.4)';
+                                
+                                return (
+                                    <Marker key={marker.id} coordinates={[marker.lng, marker.lat]}>
+                                        <g className="map-pin-group" transform={`scale(${1 / mapZoom})`} style={{ cursor: 'pointer' }}>
+                                            {/* Pulse Animation (Native SVG) */}
+                                            <circle cx={0} cy={0} r={8} fill={pulseColor}>
+                                                <animate attributeName="r" from="4" to="16" dur="2s" repeatCount="indefinite" />
+                                                <animate attributeName="opacity" from="1" to="0" dur="2s" repeatCount="indefinite" />
+                                            </circle>
+                                            {/* Pin Core */}
+                                            <circle cx={0} cy={0} r={4} fill={pinColor} stroke="#ffffff" strokeWidth={1.5} />
+                                            
+                                            {/* Permanent Text Label Below Pin */}
+                                            <text
+                                                textAnchor="middle"
+                                                y={14}
+                                                style={{ fontFamily: "Inter", fontSize: "10px", fontWeight: 700, fill: "#1e293b", textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
+                                            >
+                                                {marker.name}
+                                            </text>
+                                            <text
+                                                textAnchor="middle"
+                                                y={26}
+                                                style={{ fontFamily: "Inter", fontSize: "12px", fontWeight: 800, fill: pinColor, textShadow: "0px 0px 4px rgba(255,255,255,0.9)" }}
+                                            >
+                                                {marker.count}
+                                            </text>
+                                        </g>
+                                    </Marker>
+                                );
+                            })}
                         </ZoomableGroup>
                     </ComposableMap>
                     
                     <div style={{ position: 'absolute', bottom: '16px', left: '16px', display: 'flex', gap: '10px', alignItems: 'flex-end', zIndex: 10, flexWrap: 'wrap', maxWidth: 'calc(100% - 32px)' }}>
                         {/* Total Karyawan Box */}
                         <div style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '10px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
-                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Karyawan</span>
-                            <span style={{ fontSize: '20px', fontWeight: 800, color: '#2563eb' }}>
-                                {mapCounts.reduce((sum, m) => sum + (parseInt(m.count) || 0), 0)}
+                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                {mapType === 'all' ? 'Total Karyawan' : 'Total Belum Vetting'}
+                            </span>
+                            <span style={{ fontSize: '20px', fontWeight: 800, color: mapType === 'all' ? '#2563eb' : '#eab308' }}>
+                                {(mapType === 'all' ? mapCounts : unvettedMapCounts).reduce((sum, m) => sum + (parseInt(m.count) || 0), 0)}
                             </span>
                         </div>
                         {/* Branch Location Boxes */}
@@ -581,7 +643,7 @@ export default function DashboardPage() {
                         
                         {/* Data List Editor */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px', maxHeight: '250px', overflowY: 'auto', paddingRight: '8px' }}>
-                            {mapCounts.map(marker => (
+                            {(mapType === 'all' ? mapCounts : unvettedMapCounts).map(marker => (
                                 <div key={marker.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface2)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                         <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{marker.name}</span>

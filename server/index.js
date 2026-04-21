@@ -75,7 +75,7 @@ app.use('/api/trips', authenticateToken, tripRoutes);
 app.get('/api/settings/:key', authenticateToken, (req, res) => {
   try {
     // Some settings like map data are readable by all authenticated users
-    const publicKeys = ['indonesiaMapData'];
+    const publicKeys = ['indonesiaMapData', 'unvettedMapData'];
     if (!publicKeys.includes(req.params.key) && req.user.role !== 'master') {
       return res.status(403).json({ error: 'Anda tidak diizinkan membaca pengaturan ini.' });
     }
