@@ -511,6 +511,44 @@ export default function DashboardPage() {
                 </div>
             </div>
 
+            {/* AI Security Risk Heatmap Mockup */}
+            <div className="card" style={{ marginBottom: 24, padding: '24px', background: 'linear-gradient(145deg, var(--bg-card) 0%, rgba(239, 68, 68, 0.05) 100%)', border: '1px solid var(--danger-bg)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h2 className="card-title" style={{ fontSize: '16px', color:'var(--text)', textTransform:'none', margin:0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        🛡️ AI Security Risk & Integrity Heatmap
+                    </h2>
+                    <span style={{ fontSize: '12px', background: 'var(--danger)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>Vetting AI</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    {[
+                        { name: 'Jakarta (Pusat)', score: 92, color: 'var(--success)', trend: '↗️', label: 'Sangat Aman' },
+                        { name: 'Bekasi', score: 65, color: 'var(--warning)', trend: '➡️', label: 'Perlu Verifikasi' },
+                        { name: 'Surabaya', score: 35, color: 'var(--danger)', trend: '↘️', label: 'Risiko Tinggi' },
+                        { name: 'Bandung', score: 88, color: 'var(--success)', trend: '↗️', label: 'Aman' },
+                    ].map((branch, i) => (
+                        <div key={i} style={{ background: 'var(--bg-tertiary)', padding: '16px', borderRadius: 'var(--radius-md)', borderLeft: \`4px solid \${branch.color}\` }}>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                                <span>Cabang {branch.name}</span>
+                                <span>{branch.trend}</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                <span style={{ fontSize: '24px', fontWeight: 'bold', color: branch.color }}>{branch.score}%</span>
+                                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Integrity Score</span>
+                            </div>
+                            <div style={{ width: '100%', height: '6px', background: 'var(--bg)', borderRadius: '3px', marginTop: '12px', overflow: 'hidden' }}>
+                                <div style={{ width: \`\${branch.score}%\`, height: '100%', background: branch.color }}></div>
+                            </div>
+                            <div style={{ fontSize: '11px', color: branch.color, marginTop: '8px', fontWeight: 'bold' }}>
+                                Status: {branch.label}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '16px', fontStyle: 'italic' }}>
+                    *Skor ini di-generate secara otomatis oleh AI berdasarkan anomali dari data survei, alamat KTP vs Alamat Tinggal, dan hasil wawancara lapangan.
+                </p>
+            </div>
+
             {/* Vector Map Section */}
             <div className="card" style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: '24px', padding: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>

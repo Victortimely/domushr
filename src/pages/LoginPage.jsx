@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
 
 const BG_IMAGES = [
     '/backgrounds/bg1.jpg',
@@ -15,107 +14,25 @@ export default function LoginPage() {
     usePageMeta('Login', 'Masuk ke DomusHR — platform survey dan vetting karyawan berbasis web.');
     const { login } = useAuth();
     const bgImage = useMemo(() => BG_IMAGES[Math.floor(Math.random() * BG_IMAGES.length)], []);
-    const [mode, setMode] = useState('login'); // 'login' or 'register'
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showForgot, setShowForgot] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
-    const [forgotUsername, setForgotUsername] = useState('');
-    const [forgotSuccess, setForgotSuccess] = useState(false);
-    const [forgotError, setForgotError] = useState('');
 
-    // Register state
-    const [regName, setRegName] = useState('');
-    const [regUsername, setRegUsername] = useState('');
-    const [regPassword, setRegPassword] = useState('');
-    const [regError, setRegError] = useState('');
-    const [regSuccess, setRegSuccess] = useState(false);
-    const [regLoading, setRegLoading] = useState(false);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleGithubLogin = async () => {
         setError('');
         setLoading(true);
         try {
-            await login(username, password);
+            await login(); 
         } catch (err) {
             setError(err.message);
-        } finally {
             setLoading(false);
         }
     };
 
-    const handleForgotClick = () => {
-        setShowForgot(true);
-        setShowConfirm(false);
-        setForgotSuccess(false);
-        setForgotError('');
-        setForgotUsername('');
-    };
-
-    const handleConfirmYes = () => {
-        setShowConfirm(true);
-    };
-
-    const handleSubmitForgot = async () => {
-        setForgotError('');
-        if (!forgotUsername.trim()) {
-            setForgotError('Masukkan username Anda');
-            return;
-        }
-        try {
-            await api.requestPasswordReset(forgotUsername.trim());
-            setForgotSuccess(true);
-        } catch (err) {
-            setForgotError(err.message);
-        }
-    };
-
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        setRegError('');
-        if (!regName.trim() || !regUsername.trim() || !regPassword.trim()) {
-            setRegError('Semua field wajib diisi');
-            return;
-        }
-        if (regPassword.trim().length < 6) {
-            setRegError('Password minimal 6 karakter');
-            return;
-        }
-        setRegLoading(true);
-        try {
-            await api.register(regName.trim(), regUsername.trim(), regPassword.trim());
-            setRegSuccess(true);
-        } catch (err) {
-            setRegError(err.message);
-        } finally {
-            setRegLoading(false);
-        }
-    };
-
-    const switchToLogin = () => {
-        setMode('login');
-        setRegError('');
-        setRegSuccess(false);
-        setRegName('');
-        setRegUsername('');
-        setRegPassword('');
-    };
-
-    const switchToRegister = () => {
-        setMode('register');
-        setError('');
-    };
-
     return (
         <div className="login-page-split">
-            {/* Full-screen background image */}
             <div className="login-bg-image" style={{ backgroundImage: `url(${bgImage})` }} />
             <div className="login-bg-overlay" />
 
-            {/* Left Panel - Branding with animated background */}
             <div className="login-brand-panel">
                 <div className="login-brand-bg">
                     <div className="login-brand-circle c1" />
@@ -128,218 +45,51 @@ export default function LoginPage() {
                     <h1 className="login-brand-title">DomusHR</h1>
                     <p className="login-brand-subtitle">Aplikasi Survey Rumah Karyawan</p>
                     <div className="login-brand-features">
-                        <div className="login-brand-feature">
-                            <span>📡</span> GPS Tracking
-                        </div>
-                        <div className="login-brand-feature">
-                            <span>📷</span> Dokumentasi Foto
-                        </div>
-                        <div className="login-brand-feature">
-                            <span>🗺️</span> Peta Sebaran Karyawan
-                        </div>
-                        <div className="login-brand-feature">
-                            <span>📊</span> Laporan Otomatis
-                        </div>
+                        <div className="login-brand-feature"><span>📡</span> GPS Tracking</div>
+                        <div className="login-brand-feature"><span>📷</span> Dokumentasi Foto</div>
+                        <div className="login-brand-feature"><span>🗺️</span> Peta Sebaran Karyawan</div>
+                        <div className="login-brand-feature"><span>📊</span> Laporan Otomatis</div>
                     </div>
                 </div>
             </div>
 
-            {/* Right Panel - Form */}
             <div className="login-form-panel">
-                <div className="login-form-wrapper">
-                    {mode === 'login' ? (
-                        <>
-                            <div className="login-form-header">
-                                <h2>Selamat Datang! 👋</h2>
-                                <p>Masuk ke akun Anda untuk melanjutkan</p>
-                            </div>
+                <div className="login-form-wrapper" style={{ textAlign: 'center' }}>
+                    <div className="login-form-header">
+                        <h2>Selamat Datang! 👋</h2>
+                        <p>Masuk menggunakan akun GitHub Anda untuk melanjutkan ke DomusHR.</p>
+                    </div>
 
-                            <form onSubmit={handleSubmit}>
-                                <div className="form-group">
-                                    <label className="form-label">Username</label>
-                                    <input
-                                        id="login-username"
-                                        className="form-input"
-                                        type="text"
-                                        placeholder="Masukkan username"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        autoComplete="username"
-                                        required
-                                    />
-                                </div>
+                    {error && <div className="form-error" style={{ marginBottom: 16 }}>⚠ {error}</div>}
 
-                                <div className="form-group">
-                                    <label className="form-label">Password</label>
-                                    <input
-                                        id="login-password"
-                                        className="form-input"
-                                        type="password"
-                                        placeholder="Masukkan password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        autoComplete="current-password"
-                                        required
-                                    />
-                                </div>
-
-                                {error && <div className="form-error" style={{ marginBottom: 16 }}>⚠ {error}</div>}
-
-                                <button id="login-submit" type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
-                                    {loading ? <span className="spinner" /> : '🔐'} Masuk
-                                </button>
-                            </form>
-
-                            <div style={{ textAlign: 'center', marginTop: 16 }}>
-                                <button
-                                    className="btn btn-ghost"
-                                    onClick={handleForgotClick}
-                                    style={{ color: 'var(--accent)', fontSize: '0.85rem' }}
-                                    id="forgot-password-btn"
-                                >
-                                    🔑 Lupa Password?
-                                </button>
-                            </div>
-
-                            <div className="login-register-link">
-                                <span>Tidak punya akun?</span>
-                                <button className="btn btn-ghost" onClick={switchToRegister} style={{ color: 'var(--accent)', fontWeight: 600 }}>
-                                    📝 Daftar
-                                </button>
-                            </div>
-
-
-                        </>
-                    ) : (
-                        <>
-                            <div className="login-form-header">
-                                <h2>Daftar Akun Baru 📝</h2>
-                                <p>Buat akun dan tunggu persetujuan Admin</p>
-                            </div>
-
-                            {regSuccess ? (
-                                <div style={{ textAlign: 'center', padding: '30px 0' }}>
-                                    <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>✅</div>
-                                    <h3 style={{ marginBottom: 8, color: 'var(--text-primary)' }}>Pendaftaran Terkirim!</h3>
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 24 }}>
-                                        Permintaan pendaftaran Anda telah dikirim ke Admin Master. Silakan tunggu persetujuan sebelum login.
-                                    </p>
-                                    <button className="btn btn-primary" onClick={switchToLogin}>
-                                        ← Kembali ke Login
-                                    </button>
-                                </div>
-                            ) : (
-                                <form onSubmit={handleRegister}>
-                                    <div className="form-group">
-                                        <label className="form-label">Nama Lengkap <span className="required">*</span></label>
-                                        <input
-                                            className="form-input"
-                                            type="text"
-                                            placeholder="Masukkan nama lengkap"
-                                            value={regName}
-                                            onChange={(e) => setRegName(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Username <span className="required">*</span></label>
-                                        <input
-                                            className="form-input"
-                                            type="text"
-                                            placeholder="Pilih username"
-                                            value={regUsername}
-                                            onChange={(e) => setRegUsername(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Password <span className="required">*</span></label>
-                                        <input
-                                            className="form-input"
-                                            type="password"
-                                            placeholder="Minimal 5 karakter"
-                                            value={regPassword}
-                                            onChange={(e) => setRegPassword(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-
-                                    {regError && <div className="form-error" style={{ marginBottom: 16 }}>⚠ {regError}</div>}
-
-                                    <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={regLoading}>
-                                        {regLoading ? <span className="spinner" /> : '📨'} Kirim Pendaftaran
-                                    </button>
-                                </form>
-                            )}
-
-                            {!regSuccess && (
-                                <div className="login-register-link">
-                                    <span>Sudah punya akun?</span>
-                                    <button className="btn btn-ghost" onClick={switchToLogin} style={{ color: 'var(--accent)', fontWeight: 600 }}>
-                                        🔐 Masuk
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    )}
+                    <button 
+                        onClick={handleGithubLogin} 
+                        className="btn btn-block btn-lg" 
+                        disabled={loading}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '10px',
+                            backgroundColor: '#24292e',
+                            color: 'white',
+                            border: 'none',
+                            marginTop: '20px'
+                        }}
+                    >
+                        {loading ? <span className="spinner" /> : (
+                            <svg height="24" width="24" viewBox="0 0 16 16" fill="white">
+                                <path fillRule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                            </svg>
+                        )}
+                        Login dengan GitHub
+                    </button>
+                    
+                    <p style={{ marginTop: '30px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        Hanya akun GitHub yang sudah terdaftar yang dapat mengakses data secara penuh.
+                    </p>
                 </div>
             </div>
-
-            {/* Forgot Password Modal */}
-            {showForgot && (
-                <div className="modal-overlay" onClick={() => setShowForgot(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
-                        {forgotSuccess ? (
-                            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                                <div style={{ fontSize: '3rem', marginBottom: 16 }}>✅</div>
-                                <h3 style={{ marginBottom: 8 }}>Keluhan Terkirim!</h3>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 20 }}>
-                                    Permintaan reset password Anda telah dikirim ke Admin. Silakan hubungi Admin Vetting untuk proses selanjutnya.
-                                </p>
-                                <button className="btn btn-primary" onClick={() => setShowForgot(false)}>Tutup</button>
-                            </div>
-                        ) : !showConfirm ? (
-                            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                                <div style={{ fontSize: '3rem', marginBottom: 16 }}>📨</div>
-                                <h3 style={{ marginBottom: 12 }}>Kirimkan Keluhan</h3>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 24 }}>
-                                    Apakah Anda ingin mengirimkan permintaan reset password ke Admin?
-                                </p>
-                                <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                                    <button className="btn btn-primary" onClick={handleConfirmYes} style={{ minWidth: 100 }}>
-                                        ✅ Ya
-                                    </button>
-                                    <button className="btn btn-secondary" onClick={() => setShowForgot(false)} style={{ minWidth: 100 }}>
-                                        ❌ Tidak
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div>
-                                <h3 style={{ marginBottom: 16, textAlign: 'center' }}>🔑 Reset Password</h3>
-                                <div className="form-group">
-                                    <label className="form-label">Masukkan Username Anda</label>
-                                    <input
-                                        className="form-input"
-                                        type="text"
-                                        placeholder="Username yang terdaftar"
-                                        value={forgotUsername}
-                                        onChange={(e) => setForgotUsername(e.target.value)}
-                                        autoFocus
-                                    />
-                                </div>
-                                {forgotError && <div className="form-error" style={{ marginBottom: 12 }}>⚠ {forgotError}</div>}
-                                <div style={{ display: 'flex', gap: 8 }}>
-                                    <button className="btn btn-secondary" onClick={() => setShowForgot(false)} style={{ flex: 1 }}>Batal</button>
-                                    <button className="btn btn-primary" onClick={handleSubmitForgot} style={{ flex: 1 }}>📨 Kirim</button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

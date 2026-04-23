@@ -131,8 +131,8 @@ export default function LocationStep({ data, updateField, updateFields }) {
     };
 
     const mapSrc = data.latitude && data.longitude
-        ? `https://maps.google.com/maps?q=${data.latitude},${data.longitude}&z=16&output=embed`
-        : `https://maps.google.com/maps?q=-6.2,106.8&z=12&output=embed`;
+        ? `https://www.openstreetmap.org/export/embed.html?bbox=${data.longitude-0.005},${data.latitude-0.003},${data.longitude+0.005},${data.latitude+0.003}&layer=mapnik&marker=${data.latitude},${data.longitude}`
+        : `https://www.openstreetmap.org/export/embed.html?bbox=106.795,−6.205,106.805,−6.195&layer=mapnik`;
 
     return (
         <div>
@@ -230,12 +230,11 @@ export default function LocationStep({ data, updateField, updateFields }) {
             {/* Google Maps Embed */}
             <div className="map-container" style={{ height: 300, marginBottom: 16, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
                 <iframe
-                    title="Google Maps"
+                    title="OpenStreetMap"
                     src={mapSrc}
                     style={{ width: '100%', height: '100%', border: 0 }}
                     allowFullScreen
                     loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
                 />
             </div>
 

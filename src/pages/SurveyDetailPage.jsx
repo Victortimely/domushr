@@ -5,6 +5,7 @@ import api from '../services/api';
 import { generateSurveyPDF } from '../services/pdfService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { analyzeSurveyData } from '../services/aiService';
 
 export default function SurveyDetailPage() {
     const { id } = useParams();
@@ -12,6 +13,8 @@ export default function SurveyDetailPage() {
     const { user } = useAuth();
     const toast = useToast();
     const [survey, setSurvey] = useState(null);
+    const [aiAnalysis, setAiAnalysis] = useState(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     usePageMeta(survey ? `Detail: ${survey.employee_name}` : 'Detail Survey', 'Detail hasil survey vetting karyawan — identitas, lokasi, foto, dan tanda tangan.');
 
@@ -55,12 +58,25 @@ export default function SurveyDetailPage() {
         toast.success('Survey terverifikasi!');
     };
 
+    const handleRunAI = async () => {
+        setIsAnalyzing(true);
+        try {
+            const result = await analyzeSurveyData(survey);
+            setAiAnalysis(result);
+            toast.success('Analisis AI Selesai');
+        } catch (error) {
+            toast.error('Gagal menjalankan analisis AI');
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     const mapsLink = survey.latitude && survey.longitude
         ? `https://www.google.com/maps?q=${survey.latitude},${survey.longitude}`
         : null;
 
     const mapEmbedSrc = survey.latitude && survey.longitude
-        ? `https://maps.google.com/maps?q=${survey.latitude},${survey.longitude}&z=16&output=embed`
+        ? `https://www.openstreetmap.org/export/embed.html?bbox=${survey.longitude-0.005},${survey.latitude-0.003},${survey.longitude+0.005},${survey.latitude+0.003}&layer=mapnik&marker=${survey.latitude},${survey.longitude}`
         : null;
 
     const photoLabels = ['Rumah (Depan)', 'Selfie + Karyawan', 'Foto + Ketua RT'];
@@ -129,12 +145,11 @@ export default function SurveyDetailPage() {
                         </div>
                         <div className="map-container" style={{ height: 250, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
                             <iframe
-                                title="Google Maps"
+                                title="OpenStreetMap"
                                 src={mapEmbedSrc}
                                 style={{ width: '100%', height: '100%', border: 0 }}
                                 allowFullScreen
                                 loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
                             />
                         </div>
                     </>
@@ -164,7 +179,7 @@ export default function SurveyDetailPage() {
 
             {/* Audio & Notes */}
             <div className="card detail-section">
-                <div className="detail-section-title">🎤 Rekaman & Catatan</div>
+                <div className="detail-section-title">🎤 Rekaman, Catatan & Analisis Keamanan (AI)</div>
                 {survey.data?.audioBlob ? (
                     <div style={{ marginBottom: 12 }}>
                         <audio controls src={survey.data.audioBlob} style={{ width: '100%' }} />
@@ -172,9 +187,54 @@ export default function SurveyDetailPage() {
                 ) : (
                     <p style={{ color: 'var(--text-muted)', marginBottom: 12 }}>Tidak ada rekaman audio</p>
                 )}
-                <div>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Ringkasan Wawancara:</strong>
-                    <p style={{ marginTop: 4, fontSize: '0.9rem' }}>{survey.data?.interviewSummary || 'Tidak ada ringkasan'}</p>
+                
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '16px' }}>
+                    <div style={{ flex: '1 1 300px' }}>
+                        <strong style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Ringkasan Wawancara:</strong>
+                        <p style={{ marginTop: 4, fontSize: '0.9rem', lineHeight: '1.5' }}>{survey.data?.interviewSummary || 'Tidak ada ringkasan'}</p>
+                    </div>
+
+                    <div style={{ 
+                        flex: '1 1 250px', 
+                        background: 'var(--bg-tertiary)', 
+                        padding: '16px', 
+                        borderRadius: 'var(--radius-md)',
+                        borderLeft: aiAnalysis ? \`4px solid \${aiAnalysis.color}\` : '4px solid var(--border)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                🧠 AI Vetting & Integrity Check
+                            </strong>
+                            {!aiAnalysis && !isAnalyzing && (
+                                <button className="btn btn-primary btn-sm" onClick={handleRunAI} style={{ padding: '4px 8px', fontSize: '10px' }}>
+                                    Jalankan Analisis
+                                </button>
+                            )}
+                        </div>
+                        
+                        {isAnalyzing ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px', color: 'var(--text-muted)' }}>
+                                <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                                <span style={{ fontSize: '0.85rem' }}>AI sedang menganalisis risiko...</span>
+                            </div>
+                        ) : aiAnalysis ? (
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginTop: '12px' }}>
+                                <span style={{ fontSize: '2rem' }}>{aiAnalysis.icon}</span>
+                                <div>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: aiAnalysis.color }}>
+                                        {aiAnalysis.label} ({aiAnalysis.score}%)
+                                    </div>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-primary)', marginTop: '4px', lineHeight: '1.4' }}>
+                                        {aiAnalysis.desc}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{ marginTop: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                Klik tombol di atas untuk menganalisis tingkat risiko keamanan dan integritas karyawan berdasarkan data lapangan.
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

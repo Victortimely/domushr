@@ -1,113 +1,201 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+import { supabase } from '../config/supabaseClient';
 
 class ApiClient {
   constructor() {
-    this.token = localStorage.getItem('domushr_token') || null;
+    this.token = null;
   }
 
   setToken(token) {
     this.token = token;
-    if (token) {
-      localStorage.setItem('domushr_token', token);
-    } else {
-      localStorage.removeItem('domushr_token');
-    }
   }
 
   getToken() {
     return this.token;
   }
 
-  async request(path, options = {}) {
-    const url = `${API_BASE}${path}`;
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+  async get(path) {
+    if (path === '/employees') {
+      const { data, error } = await supabase.from('employees').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
     }
+    if (path === '/surveys') {
+      const { data, error } = await supabase.from('surveys').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    }
+    if (path.startsWith('/surveys/')) {
+        const id = path.split('/')[2];
+        const { data, error } = await supabase.from('surveys').select('*').eq('id', id).single();
+        if (error) throw error;
+        return data;
+    }
+    if (path === '/trips') {
+      const { data, error } = await supabase.from('trips').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    }
+    if (path.startsWith('/settings/')) {
+        const key = path.split('/')[2];
+        try {
+            const { data, error } = await supabase.from('settings').select('value').eq('key', key).single();
+            if (error) {
+                if (error.code === 'PGRST116' || error.code === '42P01') return null; // Not found or table doesn't exist
+                throw error;
+            }
+            return data;
+        } catch (err) {
+            console.warn(`Settings ${key} fetch failed, maybe missing table. Error:`, err.message);
+            return null; // Graceful degradation for Maps and Settings
+        }
+    }
+    return [];
+  }
+  
+  async post(path, body) {
+    if (path === '/employees') {
+        const { data, error } = await supabase.from('employees').insert(body).select().single();
+        if (error) throw error;
+        return data;
+    }
+    if (path === '/surveys') {
+        const uploadedData = await this.uploadMediaItems(body);
+        const { data, error } = await supabase.from('surveys').insert(uploadedData).select().single();
+        if (error) throw error;
+        return data;
+    }
+    if (path === '/trips') {
+        const { data, error } = await supabase.from('trips').insert(body).select().single();
+        if (error) throw error;
+        return data;
+    }
+    throw new Error(`Endpoint POST ${path} not mapped to Supabase`);
+  }
 
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+  async put(path, body) {
+    if (path.startsWith('/employees/')) {
+        const id = path.split('/')[2];
+        const { data, error } = await supabase.from('employees').update(body).eq('id', id).select().single();
+        if (error) throw error;
+        return data;
+    }
+    if (path.startsWith('/surveys/')) {
+        const id = path.split('/')[2];
+        const uploadedData = await this.uploadMediaItems(body);
+        const { data, error } = await supabase.from('surveys').update(uploadedData).eq('id', id).select().single();
+        if (error) throw error;
+        return data;
+    }
+    if (path.startsWith('/trips/')) {
+        const id = path.split('/')[2];
+        const { data, error } = await supabase.from('trips').update(body).eq('id', id).select().single();
+        if (error) throw error;
+        return data;
+    }
+    if (path.startsWith('/settings/')) {
+        const key = path.split('/')[2];
+        try {
+            const { data: exist } = await supabase.from('settings').select('id').eq('key', key).maybeSingle();
+            let error;
+            if (exist) {
+                const res = await supabase.from('settings').update({ value: body.value }).eq('key', key);
+                error = res.error;
+            } else {
+                const res = await supabase.from('settings').insert({ key, value: body.value });
+                error = res.error;
+            }
+            if (error) throw error;
+            return { success: true };
+        } catch(err) {
+            console.error('Failed to save settings (ensure table exists):', err);
+            throw new Error('Database config missing settings table.');
+        }
+    }
+    throw new Error(`Endpoint PUT ${path} not mapped to Supabase`);
+  }
 
-    // Handle 401 — token expired
-    if (response.status === 401) {
-      if (!path.includes('/auth/login')) {
-        this.setToken(null);
-        localStorage.removeItem('domushr_user');
-        window.location.href = '/';
+  async delete(path) {
+    if (path.startsWith('/employees/')) {
+        const id = path.split('/')[2];
+        const { error } = await supabase.from('employees').delete().eq('id', id);
+        if (error) throw error;
+        return { success: true };
+    }
+    if (path.startsWith('/surveys/')) {
+        const id = path.split('/')[2];
+        const { error } = await supabase.from('surveys').delete().eq('id', id);
+        if (error) throw error;
+        return { success: true };
+    }
+    if (path.startsWith('/trips/')) {
+        const id = path.split('/')[2];
+        const { error } = await supabase.from('trips').delete().eq('id', id);
+        if (error) throw error;
+        return { success: true };
+    }
+    throw new Error(`Endpoint DELETE ${path} not mapped to Supabase`);
+  }
+
+  // Upload helper for Survey Media
+  async uploadMediaItems(body) {
+      // Create a shallow copy
+      const data = { ...body };
+      
+      const uploadItem = async (folder, namePrefix, base64OrBlobStr) => {
+          if (!base64OrBlobStr || typeof base64OrBlobStr !== 'string' || base64OrBlobStr.startsWith('http')) return base64OrBlobStr;
+          
+          let blob;
+          let ext = 'jpg';
+          if (base64OrBlobStr.startsWith('data:')) {
+              // Extract base64
+              const arr = base64OrBlobStr.split(',');
+              const mimeMatch = arr[0].match(/:(.*?);/);
+              if (!mimeMatch) return base64OrBlobStr;
+              const mime = mimeMatch[1];
+              ext = mime.split('/')[1] || 'jpg';
+              if (ext === 'webm' || ext === 'mp4' || mime.includes('audio')) ext = 'webm'; // audio
+              
+              const bstr = atob(arr[1]);
+              let n = bstr.length;
+              const u8arr = new Uint8Array(n);
+              while(n--){
+                  u8arr[n] = bstr.charCodeAt(n);
+              }
+              blob = new Blob([u8arr], {type:mime});
+          } else {
+             return base64OrBlobStr; // fallback if it's not dataURL
+          }
+
+          const fileName = `${folder}/${namePrefix}-${Date.now()}-${Math.floor(Math.random()*1000)}.${ext}`;
+          
+          const { error } = await supabase.storage
+              .from('survey-media')
+              .upload(fileName, blob, { upsert: true, contentType: blob.type });
+              
+          if (error) {
+              console.error('Upload Error:', error);
+              return base64OrBlobStr; // Return original on error to save it anyway (not ideal but safe)
+          }
+
+          const { data: publicUrlData } = supabase.storage
+               .from('survey-media')
+               .getPublicUrl(fileName);
+
+          return publicUrlData.publicUrl;
       }
-      throw new Error('Username atau password salah.');
-    }
 
-    let data;
-    try {
-      data = await response.json();
-    } catch (e) {
-      if (!response.ok) {
-        throw new Error('Gagal memproses data dari server. Pastikan VITE_API_URL telah diatur di Vercel menuju URL backend Railway Anda.');
+      if (data.data) {
+          // deep copy data
+          data.data = { ...data.data };
+          if (data.data.photo0) data.data.photo0 = await uploadItem('photos', 'p0', data.data.photo0);
+          if (data.data.photo1) data.data.photo1 = await uploadItem('photos', 'p1', data.data.photo1);
+          if (data.data.photo2) data.data.photo2 = await uploadItem('photos', 'p2', data.data.photo2);
+          if (data.data.audioBlob) data.data.audioBlob = await uploadItem('audio', 'audio', data.data.audioBlob);
       }
-      throw new Error('Terjadi kesalahan format response dari server API.');
-    }
-
-    if (!response.ok) {
-      throw new Error(data.error || `Request failed with status ${response.status}`);
-    }
-
-    return data;
-  }
-
-  get(path) {
-    return this.request(path, { method: 'GET' });
-  }
-
-  post(path, body) {
-    return this.request(path, { method: 'POST', body: JSON.stringify(body) });
-  }
-
-  put(path, body) {
-    return this.request(path, { method: 'PUT', body: JSON.stringify(body) });
-  }
-
-  delete(path) {
-    return this.request(path, { method: 'DELETE' });
-  }
-
-  // Special method for file uploads
-  async upload(path, formData) {
-    const url = `${API_BASE}${path}`;
-    const headers = {};
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-    // Don't set Content-Type — let browser set it with boundary for multipart
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: formData,
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Upload failed');
-    return data;
-  }
-
-  // Auth methods
-  async login(username, password) {
-    const data = await this.post('/auth/login', { username, password });
-    this.setToken(data.token);
-    return data;
-  }
-
-  async register(name, username, password) {
-    return this.post('/auth/register', { name, username, password });
-  }
-
-  async requestPasswordReset(username) {
-    return this.request('/password-reset-request', { method: 'POST', body: JSON.stringify({ username }) });
+      if (data.signature) {
+          data.signature = await uploadItem('signatures', 'sig', data.signature);
+      }
+      return data;
   }
 }
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import { supabase } from '../config/supabaseClient';
 
 const AuthContext = createContext(null);
 
@@ -9,55 +9,90 @@ export function AuthProvider({ children }) {
     const [loggingOut, setLoggingOut] = useState(false);
 
     useEffect(() => {
-        // Restore user from localStorage
-        const saved = localStorage.getItem('domushr_user');
-        const token = localStorage.getItem('domushr_token');
-        if (saved && token) {
-            try {
-                setUser(JSON.parse(saved));
-                api.setToken(token);
-            } catch { }
-        }
-        setLoading(false);
+        // Load initial session
+        const getSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                await fetchProfile(session.user);
+            } else {
+                setLoading(false);
+            }
+        };
+
+        getSession();
+
+        // Listen for auth changes
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session?.user) {
+                await fetchProfile(session.user);
+            } else {
+                setUser(null);
+                setLoading(false);
+            }
+        });
+
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
     }, []);
 
-    const login = async (username, password) => {
-        const data = await api.login(username, password);
-        const userData = data.user;
-        setUser(userData);
-        localStorage.setItem('domushr_user', JSON.stringify(userData));
-        return userData;
+    const fetchProfile = async (authUser) => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', authUser.id)
+                .single();
+            
+            if (error) throw error;
+
+            setUser({
+                id: data.id,
+                username: data.username,
+                name: data.full_name,
+                role: data.role
+            });
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+            // Fallback if profile doesn't exist yet but trigger should have created it
+            setUser({
+               id: authUser.id,
+               username: authUser.user_metadata?.preferred_username || authUser.email,
+               name: authUser.user_metadata?.full_name || 'User',
+               role: 'surveyor'
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const login = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'github',
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        if (error) throw error;
     };
 
     const logout = async () => {
         setLoggingOut(true);
-        // Wait for the logout animation to play
-        await new Promise(resolve => setTimeout(resolve, 1800));
-        setUser(null);
-        api.setToken(null);
-        localStorage.removeItem('domushr_user');
-        localStorage.removeItem('domushr_token');
+        await new Promise(resolve => setTimeout(resolve, 1800)); // wait for animation
+        const { error } = await supabase.auth.signOut();
         setLoggingOut(false);
-    };
-
-    const updateUsername = async (newUsername) => {
-        if (!user) throw new Error('Tidak ada user yang login');
-        // Note: username update would need a backend endpoint
-        // For now, update locally
-        const updated = { ...user, username: newUsername };
-        setUser(updated);
-        localStorage.setItem('domushr_user', JSON.stringify(updated));
+        if (error) throw error;
     };
 
     const updateName = async (newName) => {
         if (!user) throw new Error('Tidak ada user yang login');
-        const updated = { ...user, name: newName };
-        setUser(updated);
-        localStorage.setItem('domushr_user', JSON.stringify(updated));
+        const { error } = await supabase.from('profiles').update({ full_name: newName }).eq('id', user.id);
+        if (error) throw error;
+        setUser({ ...user, name: newName });
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, loggingOut, updateUsername, updateName }}>
+        <AuthContext.Provider value={{ user, login, logout, loading, loggingOut, updateName }}>
             {children}
         </AuthContext.Provider>
     );
