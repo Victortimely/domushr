@@ -526,7 +526,7 @@ export default function DashboardPage() {
                         { name: 'Surabaya', score: 35, color: 'var(--danger)', trend: '↘️', label: 'Risiko Tinggi' },
                         { name: 'Bandung', score: 88, color: 'var(--success)', trend: '↗️', label: 'Aman' },
                     ].map((branch, i) => (
-                        <div key={i} style={{ background: 'var(--bg-tertiary)', padding: '16px', borderRadius: 'var(--radius-md)', borderLeft: \`4px solid \${branch.color}\` }}>
+                        <div key={i} style={{ background: 'var(--bg-tertiary)', padding: '16px', borderRadius: 'var(--radius-md)', borderLeft: `4px solid ${branch.color}` }}>
                             <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
                                 <span>Cabang {branch.name}</span>
                                 <span>{branch.trend}</span>
@@ -536,7 +536,7 @@ export default function DashboardPage() {
                                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Integrity Score</span>
                             </div>
                             <div style={{ width: '100%', height: '6px', background: 'var(--bg)', borderRadius: '3px', marginTop: '12px', overflow: 'hidden' }}>
-                                <div style={{ width: \`\${branch.score}%\`, height: '100%', background: branch.color }}></div>
+                                <div style={{ width: `${branch.score}%`, height: '100%', background: branch.color }}></div>
                             </div>
                             <div style={{ fontSize: '11px', color: branch.color, marginTop: '8px', fontWeight: 'bold' }}>
                                 Status: {branch.label}

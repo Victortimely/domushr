@@ -199,7 +199,7 @@ export default function SurveyDetailPage() {
                         background: 'var(--bg-tertiary)', 
                         padding: '16px', 
                         borderRadius: 'var(--radius-md)',
-                        borderLeft: aiAnalysis ? \`4px solid \${aiAnalysis.color}\` : '4px solid var(--border)'
+                        borderLeft: aiAnalysis ? `4px solid ${aiAnalysis.color}` : '4px solid var(--border)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <strong style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>

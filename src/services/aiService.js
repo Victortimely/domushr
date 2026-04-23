@@ -98,7 +98,7 @@ const callRealDeepSeekAPI = async (surveyData) => {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": \`Bearer \${API_KEY}\`
+                "Authorization": `Bearer ${API_KEY}`
             },
             body: JSON.stringify({
                 model: "deepseek-chat", // DeepSeek-V3
