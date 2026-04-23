@@ -66,11 +66,43 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const login = async () => {
+    const loginWithGithub = async () => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'github',
             options: {
                 redirectTo: window.location.origin
+            }
+        });
+        if (error) throw error;
+    };
+
+    const loginWithGoogle = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        if (error) throw error;
+    };
+
+    const loginWithEmail = async (email, password) => {
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+        if (error) throw error;
+    };
+
+    const signUpWithEmail = async (email, password, fullName) => {
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                },
+                emailRedirectTo: window.location.origin
             }
         });
         if (error) throw error;
@@ -92,7 +124,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, loggingOut, updateName }}>
+        <AuthContext.Provider value={{ user, loginWithGithub, loginWithGoogle, loginWithEmail, signUpWithEmail, logout, loading, loggingOut, updateName }}>
             {children}
         </AuthContext.Provider>
     );
