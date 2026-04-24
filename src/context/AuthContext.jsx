@@ -9,13 +9,21 @@ export function AuthProvider({ children }) {
     const [loggingOut, setLoggingOut] = useState(false);
 
     useEffect(() => {
+        let mounted = true;
+
         // Load initial session
         const getSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                await fetchProfile(session.user);
-            } else {
-                setLoading(false);
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                if (session?.user && mounted) {
+                    await fetchProfile(session.user);
+                } else if (mounted) {
+                    setLoading(false);
+                }
+            } catch (err) {
+                console.error("Auth session error:", err);
+                if (mounted) setLoading(false);
             }
         };
 
@@ -23,15 +31,24 @@ export function AuthProvider({ children }) {
 
         // Listen for auth changes
         const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (session?.user) {
+            console.log("Auth state change:", event);
+            if (event === 'SIGNED_OUT') {
+                if (mounted) {
+                    setUser(null);
+                    setLoading(false);
+                }
+            } else if (session?.user && mounted) {
                 await fetchProfile(session.user);
-            } else {
-                setUser(null);
-                setLoading(false);
+            } else if (event === 'INITIAL_SESSION' && !session) {
+                if (mounted) {
+                    setUser(null);
+                    setLoading(false);
+                }
             }
         });
 
         return () => {
+            mounted = false;
             authListener.subscription.unsubscribe();
         };
     }, []);
@@ -70,7 +87,7 @@ export function AuthProvider({ children }) {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'github',
             options: {
-                redirectTo: window.location.origin
+                redirectTo: 'https://domushr.vercel.app'
             }
         });
         if (error) throw error;
@@ -80,7 +97,7 @@ export function AuthProvider({ children }) {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin
+                redirectTo: 'https://domushr.vercel.app'
             }
         });
         if (error) throw error;
@@ -102,7 +119,7 @@ export function AuthProvider({ children }) {
                 data: {
                     full_name: fullName,
                 },
-                emailRedirectTo: window.location.origin
+                emailRedirectTo: 'https://domushr.vercel.app'
             }
         });
         if (error) throw error;
