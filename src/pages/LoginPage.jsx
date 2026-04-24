@@ -98,39 +98,48 @@ export default function LoginPage() {
 
                     <form onSubmit={handleEmailAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
                         {isSignUp && (
-                            <div className="form-group">
-                                <label className="form-label">Nama Lengkap</label>
-                                <input 
-                                    type="text" 
-                                    className="form-control" 
-                                    value={fullName} 
-                                    onChange={(e) => setFullName(e.target.value)} 
-                                    placeholder="Masukkan nama lengkap" 
-                                    required 
-                                />
+                            <div style={{ marginBottom: '16px' }}>
+                                <label className="form-label" style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>Nama Lengkap</label>
+                                <div className="login-input-group">
+                                    <input 
+                                        type="text" 
+                                        className="login-input" 
+                                        value={fullName} 
+                                        onChange={(e) => setFullName(e.target.value)} 
+                                        placeholder="Masukkan nama lengkap" 
+                                        required 
+                                    />
+                                    <span className="login-input-icon">👤</span>
+                                </div>
                             </div>
                         )}
-                        <div className="form-group">
-                            <label className="form-label">Email</label>
-                            <input 
-                                type="email" 
-                                className="form-control" 
-                                value={email} 
-                                onChange={(e) => setEmail(e.target.value)} 
-                                placeholder="nama@email.com" 
-                                required 
-                            />
+                        <div style={{ marginBottom: '16px' }}>
+                            <label className="form-label" style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>Email</label>
+                            <div className="login-input-group">
+                                <input 
+                                    type="email" 
+                                    className="login-input" 
+                                    value={email} 
+                                    onChange={(e) => setEmail(e.target.value)} 
+                                    placeholder="nama@email.com" 
+                                    required 
+                                />
+                                <span className="login-input-icon">✉️</span>
+                            </div>
                         </div>
-                        <div className="form-group">
-                            <label className="form-label">Password</label>
-                            <input 
-                                type="password" 
-                                className="form-control" 
-                                value={password} 
-                                onChange={(e) => setPassword(e.target.value)} 
-                                placeholder="Minimal 6 karakter" 
-                                required 
-                            />
+                        <div style={{ marginBottom: '24px' }}>
+                            <label className="form-label" style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>Password</label>
+                            <div className="login-input-group">
+                                <input 
+                                    type="password" 
+                                    className="login-input" 
+                                    value={password} 
+                                    onChange={(e) => setPassword(e.target.value)} 
+                                    placeholder="Minimal 6 karakter" 
+                                    required 
+                                />
+                                <span className="login-input-icon">🔒</span>
+                            </div>
                         </div>
                         <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
                             {loading ? <span className="spinner" /> : (isSignUp ? 'Daftar Akun' : 'Masuk')}
