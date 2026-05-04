@@ -11,37 +11,45 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         let mounted = true;
 
-        // Safety timeout — if auth takes more than 10 seconds, stop loading
+        // Safety timeout — if auth takes more than 8 seconds, stop loading
         const safetyTimer = setTimeout(() => {
             if (mounted) {
-                console.warn('Auth initialization timed out after 10s, falling back to logged-out state.');
+                console.warn('Auth initialization timed out after 8s, falling back to logged-out state.');
                 setLoading(false);
             }
-        }, 10000);
+        }, 8000);
 
-        // Listen for auth changes — handles INITIAL_SESSION, SIGNED_IN, SIGNED_OUT
-        // No separate getSession() call needed; onAuthStateChange fires INITIAL_SESSION
-        // immediately which covers the initial load case and avoids lock contention.
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        // IMPORTANT: The onAuthStateChange callback MUST NOT be async.
+        // Supabase holds a Web Lock during the callback. If we await inside it,
+        // the lock is not released and causes "Lock not released within 5000ms" errors.
+        // Instead, we defer async work (fetchProfile) to the next microtask.
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             console.log("Auth state change:", event);
+
             if (event === 'SIGNED_OUT') {
                 if (mounted) {
                     setUser(null);
                     setLoading(false);
                     clearTimeout(safetyTimer);
                 }
-            } else if (event === 'INITIAL_SESSION') {
-                // First event fired — determines initial auth state
-                if (session?.user && mounted) {
-                    await fetchProfile(session.user);
-                } else if (mounted) {
+                return;
+            }
+
+            if (session?.user && mounted) {
+                // Defer async profile fetch to release the auth lock first
+                clearTimeout(safetyTimer);
+                const authUser = session.user;
+                setTimeout(() => {
+                    if (mounted) {
+                        fetchProfile(authUser);
+                    }
+                }, 0);
+            } else if (event === 'INITIAL_SESSION' && !session) {
+                if (mounted) {
                     setUser(null);
                     setLoading(false);
+                    clearTimeout(safetyTimer);
                 }
-                clearTimeout(safetyTimer);
-            } else if (session?.user && mounted) {
-                await fetchProfile(session.user);
-                clearTimeout(safetyTimer);
             }
         });
 
