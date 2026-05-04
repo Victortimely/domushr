@@ -11,44 +11,43 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         let mounted = true;
 
-        // Load initial session
-        const getSession = async () => {
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                if (error) throw error;
-                if (session?.user && mounted) {
-                    await fetchProfile(session.user);
-                } else if (mounted) {
-                    setLoading(false);
-                }
-            } catch (err) {
-                console.error("Auth session error:", err);
-                if (mounted) setLoading(false);
+        // Safety timeout — if auth takes more than 10 seconds, stop loading
+        const safetyTimer = setTimeout(() => {
+            if (mounted) {
+                console.warn('Auth initialization timed out after 10s, falling back to logged-out state.');
+                setLoading(false);
             }
-        };
+        }, 10000);
 
-        getSession();
-
-        // Listen for auth changes
+        // Listen for auth changes — handles INITIAL_SESSION, SIGNED_IN, SIGNED_OUT
+        // No separate getSession() call needed; onAuthStateChange fires INITIAL_SESSION
+        // immediately which covers the initial load case and avoids lock contention.
         const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
             console.log("Auth state change:", event);
             if (event === 'SIGNED_OUT') {
                 if (mounted) {
                     setUser(null);
                     setLoading(false);
+                    clearTimeout(safetyTimer);
                 }
-            } else if (session?.user && mounted) {
-                await fetchProfile(session.user);
-            } else if (event === 'INITIAL_SESSION' && !session) {
-                if (mounted) {
+            } else if (event === 'INITIAL_SESSION') {
+                // First event fired — determines initial auth state
+                if (session?.user && mounted) {
+                    await fetchProfile(session.user);
+                } else if (mounted) {
                     setUser(null);
                     setLoading(false);
                 }
+                clearTimeout(safetyTimer);
+            } else if (session?.user && mounted) {
+                await fetchProfile(session.user);
+                clearTimeout(safetyTimer);
             }
         });
 
         return () => {
             mounted = false;
+            clearTimeout(safetyTimer);
             authListener.subscription.unsubscribe();
         };
     }, []);
