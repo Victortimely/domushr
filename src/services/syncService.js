@@ -1,4 +1,4 @@
-import api from './api';
+import { supabase } from '../config/supabaseClient';
 
 let syncInterval = null;
 
@@ -20,15 +20,26 @@ export function stopAutoSync() {
 
 export async function syncPendingSurveys() {
     try {
-        const surveys = await api.get('/surveys?status=saved');
+        const { data: surveys, error } = await supabase
+            .from('surveys')
+            .select('id')
+            .eq('status', 'saved');
+
+        if (error) throw error;
+        if (!surveys || surveys.length === 0) return 0;
+
         let synced = 0;
         for (const survey of surveys) {
             try {
-                await api.put(`/surveys/${survey.id}`, {
-                    status: 'synced',
-                    synced_at: new Date().toISOString(),
-                });
-                synced++;
+                const { error: updateError } = await supabase
+                    .from('surveys')
+                    .update({
+                        status: 'synced',
+                        synced_at: new Date().toISOString(),
+                    })
+                    .eq('id', survey.id);
+
+                if (!updateError) synced++;
             } catch (err) {
                 console.warn('Sync failed for survey', survey.id, err);
             }
