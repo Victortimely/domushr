@@ -68,21 +68,55 @@ export function AuthProvider({ children }) {
                 .eq('id', authUser.id)
                 .single();
             
-            if (error) throw error;
-
-            setUser({
-                id: data.id,
-                username: data.username,
-                name: data.full_name,
-                role: data.role
-            });
+            if (error && error.code === 'PGRST116') {
+                // Profile doesn't exist yet — auto-create one for the new user
+                const newProfile = {
+                    id: authUser.id,
+                    username: authUser.email,
+                    full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || 'User',
+                    role: 'surveyor', // Default role for new sign-ups
+                };
+                
+                const { data: createdProfile, error: insertError } = await supabase
+                    .from('profiles')
+                    .insert(newProfile)
+                    .select()
+                    .single();
+                
+                if (insertError) {
+                    console.error('Failed to auto-create profile:', insertError);
+                    // Still set user with fallback data
+                    setUser({
+                        id: authUser.id,
+                        username: authUser.email,
+                        name: newProfile.full_name,
+                        role: 'surveyor'
+                    });
+                } else {
+                    setUser({
+                        id: createdProfile.id,
+                        username: createdProfile.username,
+                        name: createdProfile.full_name,
+                        role: createdProfile.role
+                    });
+                }
+            } else if (error) {
+                throw error;
+            } else {
+                setUser({
+                    id: data.id,
+                    username: data.username,
+                    name: data.full_name,
+                    role: data.role
+                });
+            }
         } catch (error) {
             console.error('Error fetching profile:', error);
             // Fallback if profile doesn't exist yet but trigger should have created it
             setUser({
                id: authUser.id,
                username: authUser.user_metadata?.preferred_username || authUser.email,
-               name: authUser.user_metadata?.full_name || 'User',
+               name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || 'User',
                role: 'surveyor'
             });
         } finally {
@@ -119,7 +153,7 @@ export function AuthProvider({ children }) {
     };
 
     const signUpWithEmail = async (email, password, fullName) => {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -130,6 +164,15 @@ export function AuthProvider({ children }) {
             }
         });
         if (error) throw error;
+
+        // Detect duplicate email: Supabase returns a fake user with empty identities
+        if (data?.user && data.user.identities && data.user.identities.length === 0) {
+            throw new Error('Email ini sudah terdaftar. Silakan gunakan email lain atau login.');
+        }
+
+        // If Supabase returned a session (email confirmation disabled), user is auto-logged in
+        // The onAuthStateChange listener will handle setting the user state
+        return { needsEmailConfirmation: !data?.session };
     };
 
     const logout = async () => {

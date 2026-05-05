@@ -37,6 +37,20 @@ export default function LoginPage() {
         }
     };
 
+    // Translate common Supabase error messages to Indonesian
+    const translateError = (msg) => {
+        if (!msg) return 'Terjadi kesalahan yang tidak diketahui.';
+        if (msg.includes('Invalid login credentials')) return 'Email atau password salah. Periksa kembali data Anda.';
+        if (msg.includes('Email not confirmed')) return 'Email belum diverifikasi. Silakan cek inbox/spam email Anda untuk tautan verifikasi.';
+        if (msg.includes('User already registered')) return 'Email ini sudah terdaftar. Silakan login atau gunakan email lain.';
+        if (msg.includes('Password should be at least')) return 'Password minimal 6 karakter.';
+        if (msg.includes('Unable to validate email')) return 'Format email tidak valid.';
+        if (msg.includes('Signups not allowed')) return 'Pendaftaran akun baru sedang dinonaktifkan oleh administrator.';
+        if (msg.includes('Email rate limit exceeded')) return 'Terlalu banyak percobaan. Silakan coba lagi nanti.';
+        if (msg.includes('For security purposes')) return 'Untuk keamanan, silakan tunggu beberapa saat sebelum mencoba lagi.';
+        return msg;
+    };
+
     const handleEmailAuth = async (e) => {
         e.preventDefault();
         setError('');
@@ -46,16 +60,23 @@ export default function LoginPage() {
         try {
             if (isSignUp) {
                 if (!fullName.trim()) throw new Error('Nama Lengkap harus diisi');
-                await signUpWithEmail(email, password, fullName);
-                setSuccessMsg('Akun berhasil dibuat! Silakan cek email Anda untuk tautan verifikasi sebelum masuk.');
-                // Optionally switch back to login mode
-                // setIsSignUp(false);
-                // setPassword('');
+                if (password.length < 6) throw new Error('Password minimal 6 karakter');
+                
+                const result = await signUpWithEmail(email, password, fullName);
+                
+                if (result?.needsEmailConfirmation) {
+                    // Email confirmation is required by Supabase
+                    setSuccessMsg('Akun berhasil dibuat! 📧 Silakan cek inbox email Anda (termasuk folder spam) untuk tautan verifikasi. Setelah diklik, Anda bisa login.');
+                } else {
+                    // Auto-logged in (email confirmation disabled in Supabase)
+                    setSuccessMsg('Akun berhasil dibuat! Anda akan otomatis masuk...');
+                    // onAuthStateChange will handle the redirect
+                }
             } else {
                 await loginWithEmail(email, password);
             }
         } catch (err) {
-            setError(err.message);
+            setError(translateError(err.message));
         } finally {
             setLoading(false);
         }
