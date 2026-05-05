@@ -511,43 +511,182 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* AI Security Risk Heatmap Mockup */}
-            <div className="card" style={{ marginBottom: 24, padding: '24px', background: 'linear-gradient(145deg, var(--bg-card) 0%, rgba(239, 68, 68, 0.05) 100%)', border: '1px solid var(--danger-bg)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h2 className="card-title" style={{ fontSize: '16px', color:'var(--text)', textTransform:'none', margin:0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        🛡️ AI Security Risk & Integrity Heatmap
-                    </h2>
-                    <span style={{ fontSize: '12px', background: 'var(--danger)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>Vetting AI</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                    {[
-                        { name: 'Jakarta (Pusat)', score: 92, color: 'var(--success)', trend: '↗️', label: 'Sangat Aman' },
-                        { name: 'Bekasi', score: 65, color: 'var(--warning)', trend: '➡️', label: 'Perlu Verifikasi' },
-                        { name: 'Surabaya', score: 35, color: 'var(--danger)', trend: '↘️', label: 'Risiko Tinggi' },
-                        { name: 'Bandung', score: 88, color: 'var(--success)', trend: '↗️', label: 'Aman' },
-                    ].map((branch, i) => (
-                        <div key={i} style={{ background: 'var(--bg-tertiary)', padding: '16px', borderRadius: 'var(--radius-md)', borderLeft: `4px solid ${branch.color}` }}>
-                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                                <span>Cabang {branch.name}</span>
-                                <span>{branch.trend}</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                                <span style={{ fontSize: '24px', fontWeight: 'bold', color: branch.color }}>{branch.score}%</span>
-                                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Integrity Score</span>
-                            </div>
-                            <div style={{ width: '100%', height: '6px', background: 'var(--bg)', borderRadius: '3px', marginTop: '12px', overflow: 'hidden' }}>
-                                <div style={{ width: `${branch.score}%`, height: '100%', background: branch.color }}></div>
-                            </div>
-                            <div style={{ fontSize: '11px', color: branch.color, marginTop: '8px', fontWeight: 'bold' }}>
-                                Status: {branch.label}
+            {/* AI Security Risk Heatmap — Dynamic from real data */}
+            {(() => {
+                // Group employees by department
+                const deptMap = {};
+                employees.forEach(emp => {
+                    const dept = emp.department || 'Tanpa Departemen';
+                    if (!deptMap[dept]) deptMap[dept] = { employees: [], surveys: [] };
+                    deptMap[dept].employees.push(emp);
+                });
+
+                // Map surveys to departments
+                filteredSurveys.forEach(s => {
+                    const dept = s.employee_dept || 'Tanpa Departemen';
+                    if (!deptMap[dept]) deptMap[dept] = { employees: [], surveys: [] };
+                    deptMap[dept].surveys.push(s);
+                });
+
+                // Red-flag keywords from aiService logic
+                const redFlagKeywords = ['ragu', 'mencurigakan', 'bohong', 'tidak sesuai', 'palsu', 'fiktif', 'penipuan'];
+
+                const deptScores = Object.entries(deptMap)
+                    .filter(([, v]) => v.employees.length > 0)
+                    .map(([dept, { employees: deptEmps, surveys: deptSurveys }]) => {
+                        const totalEmps = deptEmps.length;
+                        const totalSurveys = deptSurveys.length;
+
+                        // 1. Survey Completion Rate (0-30 points)
+                        const completionRate = totalEmps > 0 ? totalSurveys / totalEmps : 0;
+                        const completionScore = Math.min(completionRate, 1) * 30;
+
+                        // 2. Verification Rate (0-25 points)
+                        const verifiedCount = deptSurveys.filter(s => s.status === 'verified').length;
+                        const verificationRate = totalSurveys > 0 ? verifiedCount / totalSurveys : 0;
+                        const verificationScore = verificationRate * 25;
+
+                        // 3. Data Completeness (0-25 points) — photos, GPS, signature, audio
+                        let completenessTotal = 0;
+                        let completenessMax = 0;
+                        deptSurveys.forEach(s => {
+                            const d = s.data || {};
+                            completenessMax += 5; // 5 possible items per survey
+                            if (d.photo0) completenessTotal++;
+                            if (d.photo1) completenessTotal++;
+                            if (d.photo2) completenessTotal++;
+                            if (s.latitude && s.longitude) completenessTotal++;
+                            if (s.signature || d.audioBlob) completenessTotal++;
+                        });
+                        const completenessRate = completenessMax > 0 ? completenessTotal / completenessMax : (totalSurveys === 0 ? 0 : 1);
+                        const completenessScore = completenessRate * 25;
+
+                        // 4. Risk Deductions (0 to -20 points)
+                        let riskDeduction = 0;
+
+                        // Address mismatch check
+                        deptSurveys.forEach(s => {
+                            const d = s.data || {};
+                            const ktpAddr = (d.employeeAddress || '').toLowerCase().trim();
+                            const curAddr = (d.employeeCurrentAddress || '').toLowerCase().trim();
+                            if (ktpAddr && curAddr && ktpAddr !== curAddr) {
+                                riskDeduction += 3; // Each mismatch adds risk
+                            }
+                            // Red flag keywords in interview summary
+                            const summary = (d.interviewSummary || '').toLowerCase();
+                            if (redFlagKeywords.some(kw => summary.includes(kw))) {
+                                riskDeduction += 5;
+                            }
+                        });
+
+                        // Draft surveys are risky (incomplete process)
+                        const draftCount = deptSurveys.filter(s => s.status === 'draft').length;
+                        riskDeduction += draftCount * 2;
+
+                        riskDeduction = Math.min(riskDeduction, 20); // Cap at 20
+
+                        // Final score (0-100)
+                        const rawScore = completionScore + verificationScore + completenessScore + 20 - riskDeduction;
+                        const finalScore = Math.max(0, Math.min(100, Math.round(rawScore)));
+
+                        // Determine label and color
+                        let label, color, trend;
+                        if (finalScore >= 80) { label = 'Sangat Aman'; color = 'var(--success)'; trend = '↗️'; }
+                        else if (finalScore >= 60) { label = 'Aman'; color = 'var(--success)'; trend = '↗️'; }
+                        else if (finalScore >= 40) { label = 'Perlu Verifikasi'; color = 'var(--warning)'; trend = '➡️'; }
+                        else { label = 'Risiko Tinggi'; color = 'var(--danger)'; trend = '↘️'; }
+
+                        return {
+                            name: dept,
+                            score: finalScore,
+                            color,
+                            trend,
+                            label,
+                            totalEmps,
+                            surveyed: totalSurveys,
+                            verified: verifiedCount,
+                        };
+                    })
+                    .sort((a, b) => a.score - b.score); // Worst first for attention
+
+                // Overall stats
+                const overallScore = deptScores.length > 0
+                    ? Math.round(deptScores.reduce((sum, d) => sum + d.score, 0) / deptScores.length)
+                    : 0;
+                const highRiskCount = deptScores.filter(d => d.score < 40).length;
+                const needVerifyCount = deptScores.filter(d => d.score >= 40 && d.score < 60).length;
+
+                return (
+                    <div className="card" style={{ marginBottom: 24, padding: '24px', background: 'linear-gradient(145deg, var(--bg-card) 0%, rgba(239, 68, 68, 0.05) 100%)', border: '1px solid var(--danger-bg)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                            <h2 className="card-title" style={{ fontSize: '16px', color:'var(--text)', textTransform:'none', margin:0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                🛡️ AI Security Risk & Integrity Heatmap
+                            </h2>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                {highRiskCount > 0 && (
+                                    <span style={{ fontSize: '11px', background: 'var(--danger)', color: 'white', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                        🚨 {highRiskCount} Risiko Tinggi
+                                    </span>
+                                )}
+                                {needVerifyCount > 0 && (
+                                    <span style={{ fontSize: '11px', background: 'var(--warning)', color: 'white', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                        ⚠️ {needVerifyCount} Perlu Verifikasi
+                                    </span>
+                                )}
+                                <span style={{ fontSize: '12px', background: overallScore >= 60 ? 'var(--success)' : overallScore >= 40 ? 'var(--warning)' : 'var(--danger)', color: 'white', padding: '4px 10px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                    Skor Rata-rata: {overallScore}%
+                                </span>
                             </div>
                         </div>
-                    ))}
-                </div>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '16px', fontStyle: 'italic' }}>
-                    *Skor ini di-generate secara otomatis oleh AI berdasarkan anomali dari data survei, alamat KTP vs Alamat Tinggal, dan hasil wawancara lapangan.
-                </p>
-            </div>
+
+                        {deptScores.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-dim)' }}>
+                                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📭</div>
+                                <div style={{ fontWeight: 600, marginBottom: '4px' }}>Belum Ada Data</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Tambahkan karyawan dan survey untuk melihat analisis risiko per departemen.</div>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                                {deptScores.map((dept, i) => (
+                                    <div key={i} style={{ background: 'var(--bg-tertiary)', padding: '16px', borderRadius: 'var(--radius-md)', borderLeft: `4px solid ${dept.color}` }}>
+                                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                                            <span style={{ fontWeight: 600 }}>{dept.name}</span>
+                                            <span>{dept.trend}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                            <span style={{ fontSize: '24px', fontWeight: 'bold', color: dept.color }}>{dept.score}%</span>
+                                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Integrity Score</span>
+                                        </div>
+                                        <div style={{ width: '100%', height: '6px', background: 'var(--bg)', borderRadius: '3px', marginTop: '12px', overflow: 'hidden' }}>
+                                            <div style={{ width: `${dept.score}%`, height: '100%', background: dept.color, transition: 'width 0.8s ease' }}></div>
+                                        </div>
+                                        <div style={{ fontSize: '11px', color: dept.color, marginTop: '8px', fontWeight: 'bold' }}>
+                                            Status: {dept.label}
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                            <span style={{ fontSize: '10px', padding: '2px 6px', background: 'var(--surface)', borderRadius: '4px', color: 'var(--text-dim)' }}>
+                                                👥 {dept.totalEmps} karyawan
+                                            </span>
+                                            <span style={{ fontSize: '10px', padding: '2px 6px', background: 'var(--surface)', borderRadius: '4px', color: 'var(--text-dim)' }}>
+                                                📋 {dept.surveyed} survey
+                                            </span>
+                                            <span style={{ fontSize: '10px', padding: '2px 6px', background: 'var(--surface)', borderRadius: '4px', color: dept.verified > 0 ? 'var(--success)' : 'var(--text-dim)' }}>
+                                                ✅ {dept.verified} verified
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '16px', fontStyle: 'italic' }}>
+                            *Skor dihitung otomatis berdasarkan: tingkat penyelesaian survey ({Math.round((autoSurveyed / (autoTotal || 1)) * 100)}%), 
+                            status verifikasi, kelengkapan data (foto, GPS, audio, tanda tangan), 
+                            kesesuaian alamat KTP vs domisili, dan hasil analisis wawancara lapangan.
+                        </p>
+                    </div>
+                );
+            })()}
 
             {/* Vector Map Section */}
             <div className="card" style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: '24px', padding: '24px' }}>
