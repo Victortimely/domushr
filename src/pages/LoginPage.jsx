@@ -32,7 +32,7 @@ export default function LoginPage() {
             if (provider === 'github') await loginWithGithub();
             if (provider === 'google') await loginWithGoogle();
         } catch (err) {
-            setError(err.message);
+            setError(translateError(err.message));
             setLoading(false);
         }
     };
@@ -40,14 +40,16 @@ export default function LoginPage() {
     // Translate common Supabase error messages to Indonesian
     const translateError = (msg) => {
         if (!msg) return 'Terjadi kesalahan yang tidak diketahui.';
-        if (msg.includes('Invalid login credentials')) return 'Email atau password salah. Periksa kembali data Anda.';
-        if (msg.includes('Email not confirmed')) return 'Email belum diverifikasi. Silakan cek inbox/spam email Anda untuk tautan verifikasi.';
-        if (msg.includes('User already registered')) return 'Email ini sudah terdaftar. Silakan login atau gunakan email lain.';
-        if (msg.includes('Password should be at least')) return 'Password minimal 6 karakter.';
-        if (msg.includes('Unable to validate email')) return 'Format email tidak valid.';
-        if (msg.includes('Signups not allowed')) return 'Pendaftaran akun baru sedang dinonaktifkan oleh administrator.';
-        if (msg.includes('Email rate limit exceeded')) return 'Terlalu banyak percobaan. Silakan coba lagi nanti.';
-        if (msg.includes('For security purposes')) return 'Untuk keamanan, silakan tunggu beberapa saat sebelum mencoba lagi.';
+        const lower = msg.toLowerCase();
+        if (lower.includes('invalid login credentials')) return 'Email atau password salah. Periksa kembali data Anda.';
+        if (lower.includes('email not confirmed')) return 'Email belum diverifikasi. Silakan cek inbox/spam email Anda untuk tautan verifikasi.';
+        if (lower.includes('user already registered')) return 'Email ini sudah terdaftar. Silakan login atau gunakan email lain.';
+        if (lower.includes('password should be at least')) return 'Password minimal 6 karakter.';
+        if (lower.includes('unable to validate email')) return 'Format email tidak valid.';
+        if (lower.includes('signups not allowed')) return 'Pendaftaran akun baru sedang dinonaktifkan oleh administrator.';
+        if (lower.includes('email rate limit exceeded') || lower.includes('rate limit')) return 'Terlalu banyak percobaan. Silakan tunggu beberapa menit lalu coba lagi.';
+        if (lower.includes('for security purposes')) return 'Untuk keamanan, silakan tunggu beberapa saat sebelum mencoba lagi.';
+        if (lower.includes('network') || lower.includes('fetch')) return 'Koneksi gagal. Periksa koneksi internet Anda.';
         return msg;
     };
 
