@@ -52,9 +52,36 @@ class ApiClient {
     return [];
   }
   
+  // Map camelCase form fields to snake_case Supabase columns
+  _mapEmployeeFields(body) {
+    const mapped = { ...body };
+    // Map currentAddress -> current_address
+    if ('currentAddress' in mapped) {
+      mapped.current_address = mapped.currentAddress;
+      delete mapped.currentAddress;
+    }
+    return mapped;
+  }
+
+  _mapTripFields(body) {
+    const mapped = { ...body };
+    // Map startDate -> start_date
+    if ('startDate' in mapped) {
+      mapped.start_date = mapped.startDate;
+      delete mapped.startDate;
+    }
+    // Map endDate -> end_date
+    if ('endDate' in mapped) {
+      mapped.end_date = mapped.endDate;
+      delete mapped.endDate;
+    }
+    return mapped;
+  }
+
   async post(path, body) {
     if (path === '/employees') {
-        const { data, error } = await supabase.from('employees').insert(body).select().single();
+        const mapped = this._mapEmployeeFields(body);
+        const { data, error } = await supabase.from('employees').insert(mapped).select().single();
         if (error) throw error;
         return data;
     }
@@ -64,8 +91,16 @@ class ApiClient {
         if (error) throw error;
         return data;
     }
+    if (path === '/employees/import') {
+        const rows = (body.employees || []).map(e => this._mapEmployeeFields(e));
+        if (rows.length === 0) return { imported: 0 };
+        const { data, error } = await supabase.from('employees').insert(rows).select();
+        if (error) throw error;
+        return { imported: data?.length || 0 };
+    }
     if (path === '/trips') {
-        const { data, error } = await supabase.from('trips').insert(body).select().single();
+        const mapped = this._mapTripFields(body);
+        const { data, error } = await supabase.from('trips').insert(mapped).select().single();
         if (error) throw error;
         return data;
     }
@@ -75,7 +110,8 @@ class ApiClient {
   async put(path, body) {
     if (path.startsWith('/employees/')) {
         const id = path.split('/')[2];
-        const { data, error } = await supabase.from('employees').update(body).eq('id', id).select().single();
+        const mapped = this._mapEmployeeFields(body);
+        const { data, error } = await supabase.from('employees').update(mapped).eq('id', id).select().single();
         if (error) throw error;
         return data;
     }
@@ -88,7 +124,8 @@ class ApiClient {
     }
     if (path.startsWith('/trips/')) {
         const id = path.split('/')[2];
-        const { data, error } = await supabase.from('trips').update(body).eq('id', id).select().single();
+        const mapped = this._mapTripFields(body);
+        const { data, error } = await supabase.from('trips').update(mapped).eq('id', id).select().single();
         if (error) throw error;
         return data;
     }
