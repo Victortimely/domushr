@@ -13,6 +13,34 @@ class ApiClient {
     return this.token;
   }
 
+  // ── Input Sanitization ──────────────────────────────────────
+  // Strips HTML tags and dangerous characters to prevent stored XSS.
+  // Applied automatically to all string fields before insert/update.
+  _sanitizeString(str) {
+    if (typeof str !== 'string') return str;
+    return str
+      .replace(/<[^>]*>/g, '')           // Strip HTML tags
+      .replace(/javascript:/gi, '')      // Strip javascript: URIs
+      .replace(/on\w+\s*=/gi, '')        // Strip inline event handlers (onclick=, etc.)
+      .trim();
+  }
+
+  _sanitizeObject(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(item => this._sanitizeObject(item));
+    const sanitized = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (typeof value === 'string') {
+        sanitized[key] = this._sanitizeString(value);
+      } else if (typeof value === 'object' && value !== null) {
+        sanitized[key] = this._sanitizeObject(value);
+      } else {
+        sanitized[key] = value;
+      }
+    }
+    return sanitized;
+  }
+
   async get(path) {
     if (path === '/employees') {
       const { data, error } = await supabase.from('employees').select('*').order('created_at', { ascending: false });
@@ -79,27 +107,30 @@ class ApiClient {
   }
 
   async post(path, body) {
+    // Sanitize all input before sending to database
+    const sanitized = this._sanitizeObject(body);
+
     if (path === '/employees') {
-        const mapped = this._mapEmployeeFields(body);
+        const mapped = this._mapEmployeeFields(sanitized);
         const { data, error } = await supabase.from('employees').insert(mapped).select().single();
         if (error) throw error;
         return data;
     }
     if (path === '/surveys') {
-        const uploadedData = await this.uploadMediaItems(body);
+        const uploadedData = await this.uploadMediaItems(sanitized);
         const { data, error } = await supabase.from('surveys').insert(uploadedData).select().single();
         if (error) throw error;
         return data;
     }
     if (path === '/employees/import') {
-        const rows = (body.employees || []).map(e => this._mapEmployeeFields(e));
+        const rows = (sanitized.employees || []).map(e => this._mapEmployeeFields(e));
         if (rows.length === 0) return { imported: 0 };
         const { data, error } = await supabase.from('employees').insert(rows).select();
         if (error) throw error;
         return { imported: data?.length || 0 };
     }
     if (path === '/trips') {
-        const mapped = this._mapTripFields(body);
+        const mapped = this._mapTripFields(sanitized);
         const { data, error } = await supabase.from('trips').insert(mapped).select().single();
         if (error) throw error;
         return data;
@@ -108,37 +139,40 @@ class ApiClient {
   }
 
   async put(path, body) {
+    // Sanitize all input before sending to database
+    const sanitized = this._sanitizeObject(body);
+
     if (path.startsWith('/employees/')) {
         const id = path.split('/')[2];
-        const mapped = this._mapEmployeeFields(body);
+        const mapped = this._mapEmployeeFields(sanitized);
         const { data, error } = await supabase.from('employees').update(mapped).eq('id', id).select().single();
         if (error) throw error;
         return data;
     }
     if (path.startsWith('/surveys/')) {
         const id = path.split('/')[2];
-        const uploadedData = await this.uploadMediaItems(body);
+        const uploadedData = await this.uploadMediaItems(sanitized);
         const { data, error } = await supabase.from('surveys').update(uploadedData).eq('id', id).select().single();
         if (error) throw error;
         return data;
     }
     if (path.startsWith('/trips/')) {
         const id = path.split('/')[2];
-        const mapped = this._mapTripFields(body);
+        const mapped = this._mapTripFields(sanitized);
         const { data, error } = await supabase.from('trips').update(mapped).eq('id', id).select().single();
         if (error) throw error;
         return data;
     }
     if (path.startsWith('/settings/')) {
-        const key = path.split('/')[2];
+        const key = this._sanitizeString(path.split('/')[2]);
         try {
             const { data: exist } = await supabase.from('settings').select('id').eq('key', key).maybeSingle();
             let error;
             if (exist) {
-                const res = await supabase.from('settings').update({ value: body.value }).eq('key', key);
+                const res = await supabase.from('settings').update({ value: sanitized.value }).eq('key', key);
                 error = res.error;
             } else {
-                const res = await supabase.from('settings').insert({ key, value: body.value });
+                const res = await supabase.from('settings').insert({ key, value: sanitized.value });
                 error = res.error;
             }
             if (error) throw error;
